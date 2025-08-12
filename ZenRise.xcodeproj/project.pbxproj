@@ -32,6 +32,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4E23E8792D20C9DA00F34526 /* ZenRise */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+				Sounds/default_alarm = audio.mp3;
+			};
 			path = ZenRise;
 			sourceTree = "<group>";
 		};

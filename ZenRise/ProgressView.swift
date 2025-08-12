@@ -1,10 +1,8 @@
 import SwiftUI
 
 struct ProgressView: View {
-    let currentWakeUpTime: Date
-    let targetWakeUpTime: Date
+    let wakeUpSchedule: WakeUpSchedule
     let startDate: Date
-    let totalDays: Int
     
     private var calendar: Calendar {
         Calendar.current
@@ -12,29 +10,12 @@ struct ProgressView: View {
     
     private var daysCompleted: Int {
         let days = calendar.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        return min(days, totalDays)
+        return min(days, wakeUpSchedule.timeUntilTarget.days)
     }
     
     private var progressPercentage: Double {
-        guard totalDays > 0 else { return 0 }
-        return Double(daysCompleted) / Double(totalDays)
-    }
-    
-    private func wakeUpTimeForDay(dayOffset: Int) -> Date {
-        let calendar = Calendar.current
-        let currentComponents = calendar.dateComponents([.hour, .minute], from: currentWakeUpTime)
-        let targetComponents = calendar.dateComponents([.hour, .minute], from: targetWakeUpTime)
-        
-        let currentMinutes = currentComponents.hour! * 60 + currentComponents.minute!
-        let minutesAdjustment = 15 * dayOffset
-        
-        var adjustedComponents = DateComponents()
-        let adjustedMinutes = (currentMinutes - minutesAdjustment + 24 * 60) % (24 * 60)
-        
-        adjustedComponents.hour = adjustedMinutes / 60
-        adjustedComponents.minute = adjustedMinutes % 60
-        
-        return calendar.date(from: adjustedComponents) ?? currentWakeUpTime
+        guard wakeUpSchedule.timeUntilTarget.days > 0 else { return 0 }
+        return Double(daysCompleted) / Double(wakeUpSchedule.timeUntilTarget.days)
     }
     
     var body: some View {
@@ -50,7 +31,7 @@ struct ProgressView: View {
                         .frame(height: 20)
                         .padding(.horizontal)
                     
-                    Text("\(daysCompleted) of \(totalDays) days completed")
+                    Text("\(daysCompleted) of \(wakeUpSchedule.timeUntilTarget.days) days completed")
                         .foregroundColor(.secondary)
                 }
                 .padding()
@@ -66,10 +47,10 @@ struct ProgressView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    ForEach(0..<totalDays, id: \.self) { day in
+                    ForEach(0..<wakeUpSchedule.timeUntilTarget.days, id: \.self) { day in
                         DayProgressRow(
                             day: day + 1,
-                            wakeUpTime: wakeUpTimeForDay(dayOffset: day),
+                            wakeUpTime: wakeUpSchedule.wakeUpTimeForDay(day),
                             isCompleted: day < daysCompleted
                         )
                     }
@@ -130,5 +111,17 @@ struct DayProgressRow: View {
         }
         .padding(.vertical, 8)
         .opacity(isCompleted ? 0.8 : 1)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ProgressView(
+            wakeUpSchedule: WakeUpSchedule(
+                currentWakeUpTime: Date(),
+                targetWakeUpTime: Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
+            ),
+            startDate: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()
+        )
     }
 } 

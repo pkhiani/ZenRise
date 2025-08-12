@@ -1,10 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Binding var currentWakeUpTime: Date
-    @Binding var targetWakeUpTime: Date
-    @Binding var isAlarmEnabled: Bool
-    @ObservedObject var themeSettings: ClockThemeSettings
+    @EnvironmentObject var settingsManager: UserSettingsManager
+    @EnvironmentObject var notificationManager: NotificationManager
     @StateObject private var soundManager = SoundManager()
     
     var body: some View {
@@ -15,7 +13,7 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     DatePicker("Current Wake-up Time",
-                             selection: $currentWakeUpTime,
+                             selection: $settingsManager.settings.currentWakeUpTime,
                              displayedComponents: .hourAndMinute)
                         .labelsHidden()
                 }
@@ -25,23 +23,23 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     DatePicker("Target Wake-up Time",
-                             selection: $targetWakeUpTime,
+                             selection: $settingsManager.settings.targetWakeUpTime,
                              displayedComponents: .hourAndMinute)
                         .labelsHidden()
                 }
             }
             
             Section("Alarm Settings") {
-                Toggle("Enable Alarm", isOn: $isAlarmEnabled)
+                Toggle("Enable Alarm", isOn: $settingsManager.settings.isAlarmEnabled)
                 
-                if isAlarmEnabled {
-                    Picker("Sound", selection: $themeSettings.selectedSound) {
+                if settingsManager.settings.isAlarmEnabled {
+                    Picker("Sound", selection: $settingsManager.settings.themeSettings.selectedSound) {
                         ForEach(ClockThemeSettings.AlarmSound.allCases, id: \.self) { sound in
                             HStack {
                                 Text(sound.rawValue)
                                 Spacer()
                                 Button {
-                                    soundManager.playSound(sound, volume: themeSettings.volume)
+                                    soundManager.playSound(sound, volume: settingsManager.settings.themeSettings.volume)
                                 } label: {
                                     Image(systemName: "play.circle")
                                         .foregroundColor(.blue)
@@ -55,7 +53,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "speaker.fill")
-                            Slider(value: $themeSettings.volume, in: 0...1)
+                            Slider(value: $settingsManager.settings.themeSettings.volume, in: 0...1)
                             Image(systemName: "speaker.wave.3.fill")
                         }
                         Text("Volume")
@@ -67,22 +65,22 @@ struct SettingsView: View {
             }
             
             Section("Clock Style") {
-                Picker("Style", selection: $themeSettings.clockStyle) {
+                Picker("Style", selection: $settingsManager.settings.themeSettings.clockStyle) {
                     ForEach(ClockThemeSettings.ClockStyle.allCases, id: \.self) { style in
                         Text(style.rawValue).tag(style)
                     }
                 }
                 
-                Picker("Size", selection: $themeSettings.clockSize) {
+                Picker("Size", selection: $settingsManager.settings.themeSettings.clockSize) {
                     ForEach(ClockThemeSettings.ClockSize.allCases, id: \.self) { size in
                         Text(size.rawValue).tag(size)
                     }
                 }
                 
-                Toggle("Show Time Arcs", isOn: $themeSettings.showArcs)
+                Toggle("Show Time Arcs", isOn: $settingsManager.settings.themeSettings.showArcs)
                 
-                ColorPicker("Current Time Color", selection: $themeSettings.currentHandColor)
-                ColorPicker("Target Time Color", selection: $themeSettings.targetHandColor)
+                ColorPicker("Current Time Color", selection: $settingsManager.settings.themeSettings.currentHandColor)
+                ColorPicker("Target Time Color", selection: $settingsManager.settings.themeSettings.targetHandColor)
             }
             
             Section("About") {
@@ -97,11 +95,19 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .onChange(of: themeSettings.selectedSound) { _ in
+        .onChange(of: settingsManager.settings.themeSettings.selectedSound) { _ in
             soundManager.stopSound()
         }
         .onDisappear {
             soundManager.stopSound()
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SettingsView()
+            .environmentObject(UserSettingsManager())
+            .environmentObject(NotificationManager())
     }
 } 
