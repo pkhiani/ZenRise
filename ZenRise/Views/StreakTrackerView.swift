@@ -9,12 +9,29 @@ import SwiftUI
 
 struct StreakTrackerView: View {
     let sleepData: [SleepData]
+    @EnvironmentObject var settingsManager: UserSettingsManager
     @State private var currentStreak: Int = 0
     @State private var bestStreak: Int = 0
     @State private var showCelebration = false
     
     private var streakData: StreakData {
         calculateStreakData()
+    }
+    
+    private var userGoal: Int {
+        // Calculate goal based on user's target wake time vs current wake time
+        let calendar = Calendar.current
+        let currentTime = settingsManager.settings.currentWakeUpTime
+        let targetTime = settingsManager.settings.targetWakeUpTime
+        
+        let currentMinutes = calendar.component(.hour, from: currentTime) * 60 + calendar.component(.minute, from: currentTime)
+        let targetMinutes = calendar.component(.hour, from: targetTime) * 60 + calendar.component(.minute, from: targetTime)
+        
+        let differenceMinutes = currentMinutes - targetMinutes
+        
+        // Goal is based on how many days it would take to reach target at 15 minutes per day
+        let daysNeeded = max(1, Int(ceil(Double(differenceMinutes) / 15.0)))
+        return min(daysNeeded, 30) // Cap at 30 days
     }
     
     var body: some View {
@@ -40,7 +57,7 @@ struct StreakTrackerView: View {
                     .frame(width: 120, height: 120)
                 
                 Circle()
-                    .trim(from: 0, to: min(Double(currentStreak) / 30.0, 1.0)) // 30 days max for full circle
+                    .trim(from: 0, to: min(Double(currentStreak) / Double(userGoal), 1.0))
                     .stroke(
                         LinearGradient(
                             colors: [Color.green, Color.mint],
@@ -89,7 +106,7 @@ struct StreakTrackerView: View {
                 
                 StreakStatCard(
                     title: "Goal",
-                    value: "30",
+                    value: "\(userGoal)",
                     subtitle: "days",
                     color: .orange,
                     isHighlighted: false
@@ -99,14 +116,14 @@ struct StreakTrackerView: View {
             // Progress bar
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Progress to 30-day goal")
+                    Text("Progress to \(userGoal)-day goal")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    Text("\(currentStreak)/30")
+                    Text("\(currentStreak)/\(userGoal)")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
@@ -126,7 +143,7 @@ struct StreakTrackerView: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * min(Double(currentStreak) / 30.0, 1.0), height: 8)
+                            .frame(width: geometry.size.width * min(Double(currentStreak) / Double(userGoal), 1.0), height: 8)
                             .animation(.easeInOut(duration: 0.8), value: currentStreak)
                     }
                 }
@@ -351,12 +368,20 @@ struct StreakDayRow: View {
     }
     
     private var timeDifference: String {
-        let difference = day.wakeTime.timeIntervalSince(day.targetTime)
-        if difference <= 0 {
+        // Calculate the difference in minutes between actual and target wake times
+        let calendar = Calendar.current
+        let wakeComponents = calendar.dateComponents([.hour, .minute], from: day.wakeTime)
+        let targetComponents = calendar.dateComponents([.hour, .minute], from: day.targetTime)
+        
+        let wakeMinutes = (wakeComponents.hour ?? 0) * 60 + (wakeComponents.minute ?? 0)
+        let targetMinutes = (targetComponents.hour ?? 0) * 60 + (targetComponents.minute ?? 0)
+        
+        let differenceMinutes = wakeMinutes - targetMinutes
+        
+        if differenceMinutes <= 0 {
             return "On time"
         } else {
-            let minutes = Int(difference / 60)
-            return "+\(minutes)m"
+            return "+\(differenceMinutes)m"
         }
     }
     
@@ -383,7 +408,7 @@ struct StreakDayRow: View {
                 
                 Text(timeDifference)
                     .font(.caption)
-                    .foregroundColor(day.isSuccessful ? .green : .orange)
+                    .foregroundColor(day.isSuccessful ? .green : .red)
             }
             
             // Success indicator

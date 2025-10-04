@@ -89,12 +89,10 @@ struct ProgressTabView: View {
                         case .sleep:
                             SleepGraphView(sleepData: sleepTracker.sleepData)
                         case .snooze:
-                            SnoozeTrackerView(
-                                sleepData: sleepTracker.sleepData,
-                                snoozePatterns: sleepTracker.snoozePatterns
-                            )
+                            SnoozeTrackerView()
                         case .streak:
                             StreakTrackerView(sleepData: sleepTracker.sleepData)
+                                .environmentObject(settingsManager)
                         }
                     }
                     .padding(.horizontal, 20)

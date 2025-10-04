@@ -8,181 +8,7 @@
 import SwiftUI
 import Charts
 
-struct SnoozeTrackerView: View {
-    let sleepData: [SleepData]
-    let snoozePatterns: [SnoozePattern]
-    @State private var selectedView: SnoozeViewType = .daily
-    
-    enum SnoozeViewType: String, CaseIterable {
-        case daily = "Daily"
-        case weekly = "Weekly"
-    }
-    
-    private var last7DaysData: [SleepData] {
-        let calendar = Calendar.current
-        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return sleepData.filter { $0.date >= sevenDaysAgo }.sorted { $0.date > $1.date }
-    }
-    
-    private var weeklySnoozeData: [WeeklySnoozeData] {
-        let calendar = Calendar.current
-        var weeklyData: [WeeklySnoozeData] = []
-        
-        for i in 0..<4 { // Last 4 weeks
-            let weekStart = calendar.date(byAdding: .weekOfYear, value: -i, to: Date()) ?? Date()
-            let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
-            
-            let weekSleepData = sleepData.filter { data in
-                data.date >= weekStart && data.date <= weekEnd
-            }
-            
-            let totalSnoozes = weekSleepData.reduce(0) { $0 + $1.snoozeCount }
-            let averageSnoozes = weekSleepData.isEmpty ? 0.0 : Double(totalSnoozes) / Double(weekSleepData.count)
-            let maxSnoozes = weekSleepData.map { $0.snoozeCount }.max() ?? 0
-            
-            weeklyData.append(WeeklySnoozeData(
-                weekStart: weekStart,
-                weekEnd: weekEnd,
-                totalSnoozes: totalSnoozes,
-                averageSnoozes: averageSnoozes,
-                maxSnoozes: maxSnoozes,
-                daysWithData: weekSleepData.count
-            ))
-        }
-        
-        return weeklyData.reversed()
-    }
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            // Header
-            HStack {
-                Text("Snooze Tracking")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Picker("View", selection: $selectedView) {
-                    ForEach(SnoozeViewType.allCases, id: \.self) { viewType in
-                        Text(viewType.rawValue).tag(viewType)
-                    }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .frame(width: 120)
-            }
-            
-            // Content based on selected view
-            switch selectedView {
-            case .daily:
-                DailySnoozeView(data: last7DaysData)
-            case .weekly:
-                WeeklySnoozeView(data: weeklySnoozeData)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-        )
-    }
-}
-
-struct DailySnoozeView: View {
-    let data: [SleepData]
-    
-    private var totalSnoozes: Int {
-        data.reduce(0) { $0 + $1.snoozeCount }
-    }
-    
-    private var averageSnoozes: Double {
-        guard !data.isEmpty else { return 0 }
-        return Double(totalSnoozes) / Double(data.count)
-    }
-    
-    private var maxSnoozes: Int {
-        data.map { $0.snoozeCount }.max() ?? 0
-    }
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Summary stats
-            HStack(spacing: 20) {
-                SnoozeStatCard(
-                    title: "Total",
-                    value: "\(totalSnoozes)",
-                    subtitle: "snoozes",
-                    color: .orange
-                )
-                
-                SnoozeStatCard(
-                    title: "Average",
-                    value: String(format: "%.1f", averageSnoozes),
-                    subtitle: "per day",
-                    color: .blue
-                )
-                
-                SnoozeStatCard(
-                    title: "Peak",
-                    value: "\(maxSnoozes)",
-                    subtitle: "max daily",
-                    color: .red
-                )
-            }
-            
-            // Daily breakdown
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Last 7 Days")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
-                if data.isEmpty {
-                    EmptySnoozeState()
-                } else {
-                    ForEach(data.prefix(7), id: \.date) { dayData in
-                        DailySnoozeRow(data: dayData)
-                    }
-                }
-            }
-        }
-    }
-}
-
-struct WeeklySnoozeView: View {
-    let data: [WeeklySnoozeData]
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Weekly chart
-            if data.isEmpty {
-                EmptySnoozeState()
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(data.prefix(4), id: \.weekStart) { weekData in
-                        WeeklySnoozeBar(weekData: weekData, maxSnoozes: data.map { $0.totalSnoozes }.max() ?? 1)
-                    }
-                }
-                .frame(height: 150)
-            }
-            
-            // Weekly summary
-            if !data.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Weekly Summary")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    ForEach(data.prefix(3), id: \.weekStart) { weekData in
-                        WeeklySnoozeRow(data: weekData)
-                    }
-                }
-            }
-        }
-    }
-}
-
+// MARK: - Supporting Data Structures
 struct WeeklySnoozeData: Identifiable {
     let id = UUID()
     let weekStart: Date
@@ -193,6 +19,7 @@ struct WeeklySnoozeData: Identifiable {
     let daysWithData: Int
 }
 
+// MARK: - Supporting Views
 struct SnoozeStatCard: View {
     let title: String
     let value: String
@@ -236,7 +63,7 @@ struct DailySnoozeRow: View {
     
     private var dateString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M/d"
+        formatter.dateFormat = "MMM d"
         return formatter.string(from: data.date)
     }
     
@@ -255,28 +82,20 @@ struct DailySnoozeRow: View {
             
             Spacer()
             
-            HStack(spacing: 4) {
-                Image(systemName: "bell.fill")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                
-                Text("\(data.snoozeCount)")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+            HStack(spacing: 8) {
+                ForEach(0..<max(5, data.snoozeCount + 1), id: \.self) { index in
+                    Circle()
+                        .fill(index < data.snoozeCount ? Color.orange : Color.gray.opacity(0.3))
+                        .frame(width: 8, height: 8)
+                }
             }
             
-            // Success indicator
-            Circle()
-                .fill(data.isSuccessful ? Color.green : Color.red)
-                .frame(width: 8, height: 8)
+            Text("\(data.snoozeCount)")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+                .frame(width: 30, alignment: .trailing)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.systemGroupedBackground))
-        )
     }
 }
 
@@ -285,8 +104,10 @@ struct WeeklySnoozeRow: View {
     
     private var weekRange: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M/d"
-        return "\(formatter.string(from: data.weekStart)) - \(formatter.string(from: data.weekEnd))"
+        formatter.dateFormat = "MMM d"
+        let start = formatter.string(from: data.weekStart)
+        let end = formatter.string(from: data.weekEnd)
+        return "\(start) - \(end)"
     }
     
     var body: some View {
@@ -305,22 +126,16 @@ struct WeeklySnoozeRow: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(data.totalSnoozes) total")
-                    .font(.subheadline)
+                Text("\(data.totalSnoozes)")
+                    .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
-                Text("\(String(format: "%.1f", data.averageSnoozes)) avg")
+                Text("snoozes")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.systemGroupedBackground))
-        )
     }
 }
 
@@ -330,13 +145,10 @@ struct WeeklySnoozeBar: View {
     
     private var weekRange: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M/d"
-        return "\(formatter.string(from: weekData.weekStart))-\(formatter.string(from: weekData.weekEnd))"
-    }
-    
-    private var barWidth: CGFloat {
-        guard maxSnoozes > 0 else { return 0 }
-        return CGFloat(weekData.totalSnoozes) / CGFloat(maxSnoozes) * 200
+        formatter.dateFormat = "MMM d"
+        let start = formatter.string(from: weekData.weekStart)
+        let end = formatter.string(from: weekData.weekEnd)
+        return "\(start) - \(end)"
     }
     
     var body: some View {
@@ -353,21 +165,14 @@ struct WeeklySnoozeBar: View {
                     .frame(height: 20)
                 
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.orange.opacity(0.7), Color.orange],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: barWidth, height: 20)
-                    .animation(.easeInOut(duration: 0.8), value: barWidth)
+                    .fill(Color.orange)
+                    .frame(width: maxSnoozes > 0 ? CGFloat(weekData.totalSnoozes) / CGFloat(maxSnoozes) * 200 : 0, height: 20)
             }
             .frame(width: 200)
             
             Text("\(weekData.totalSnoozes)")
                 .font(.caption)
-                .fontWeight(.semibold)
+                .fontWeight(.medium)
                 .foregroundColor(.primary)
                 .frame(width: 30, alignment: .trailing)
         }
@@ -390,30 +195,165 @@ struct EmptySnoozeState: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(height: 120)
+        .padding(.vertical, 40)
+    }
+}
+
+// MARK: - Main View
+struct SnoozeTrackerView: View {
+    @EnvironmentObject var sleepTracker: SleepBehaviorTracker
+    @State private var refreshTrigger = UUID()
+    
+    private var last7DaysData: [SleepData] {
+        let calendar = Calendar.current
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        return sleepTracker.sleepData.filter { $0.date >= sevenDaysAgo }.sorted { $0.date > $1.date }
+    }
+    
+    private var weeklySnoozeData: [WeeklySnoozeData] {
+        let calendar = Calendar.current
+        var weeklyData: [WeeklySnoozeData] = []
+        
+        for i in 0..<4 { // Last 4 weeks
+            let weekStart = calendar.date(byAdding: .weekOfYear, value: -i, to: Date()) ?? Date()
+            let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+            
+            let weekSleepData = sleepTracker.sleepData.filter { data in
+                data.date >= weekStart && data.date <= weekEnd
+            }
+            
+            let totalSnoozes = weekSleepData.reduce(0) { $0 + $1.snoozeCount }
+            let averageSnoozes = weekSleepData.isEmpty ? 0.0 : Double(totalSnoozes) / Double(weekSleepData.count)
+            let maxSnoozes = weekSleepData.map { $0.snoozeCount }.max() ?? 0
+            
+            weeklyData.append(WeeklySnoozeData(
+                weekStart: weekStart,
+                weekEnd: weekEnd,
+                totalSnoozes: totalSnoozes,
+                averageSnoozes: averageSnoozes,
+                maxSnoozes: maxSnoozes,
+                daysWithData: weekSleepData.count
+            ))
+        }
+        
+        return Array(weeklyData.reversed())
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Text("Snooze Tracking")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
+            // Daily view only
+            DailySnoozeView(data: last7DaysData)
+                .id(refreshTrigger) // Force refresh when trigger changes
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+        .onChange(of: sleepTracker.sleepData) { oldValue, newValue in
+            refreshTrigger = UUID()
+        }
+    }
+}
+
+struct DailySnoozeView: View {
+    let data: [SleepData]
+    
+    private var totalSnoozes: Int {
+        data.reduce(0) { $0 + $1.snoozeCount }
+    }
+    
+    private var averageSnoozes: Double {
+        guard !data.isEmpty else { return 0 }
+        return Double(totalSnoozes) / Double(data.count)
+    }
+    
+    private var maxSnoozes: Int {
+        data.map { $0.snoozeCount }.max() ?? 0
+    }
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Summary stats
+            HStack(spacing: 20) {
+                SnoozeStatCard(
+                    title: "Total",
+                    value: "\(totalSnoozes)",
+                    subtitle: "snoozes",
+                    color: .orange
+                )
+                
+                SnoozeStatCard(
+                    title: "Average",
+                    value: String(format: "%.1f", averageSnoozes),
+                    subtitle: "per day",
+                    color: .blue
+                )
+                
+                SnoozeStatCard(
+                    title: "Max",
+                    value: "\(maxSnoozes)",
+                    subtitle: "snoozes",
+                    color: .red
+                )
+            }
+            
+            // Daily breakdown
+            if data.isEmpty {
+                EmptySnoozeState()
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(data.prefix(7), id: \.date) { dayData in
+                        DailySnoozeRow(data: dayData)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct WeeklySnoozeView: View {
+    let data: [WeeklySnoozeData]
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Weekly chart
+            if data.isEmpty {
+                EmptySnoozeState()
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(data.prefix(4), id: \.weekStart) { weekData in
+                        WeeklySnoozeBar(weekData: weekData, maxSnoozes: data.map { $0.totalSnoozes }.max() ?? 1)
+                    }
+                }
+                .frame(height: 150)
+            }
+            
+            // Weekly list
+            if !data.isEmpty {
+                VStack(spacing: 8) {
+                    ForEach(data.prefix(3), id: \.weekStart) { weekData in
+                        WeeklySnoozeRow(data: weekData)
+                    }
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    let sampleData = [
-        SleepData(
-            date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
-            actualWakeTime: Date(),
-            targetWakeTime: Date(),
-            snoozeCount: 2,
-            isSuccessful: false,
-            alarmEnabled: true
-        ),
-        SleepData(
-            date: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(),
-            actualWakeTime: Date(),
-            targetWakeTime: Date(),
-            snoozeCount: 0,
-            isSuccessful: true,
-            alarmEnabled: true
-        )
-    ]
-    
-    SnoozeTrackerView(sleepData: sampleData, snoozePatterns: [])
+    SnoozeTrackerView()
+        .environmentObject(SleepBehaviorTracker())
         .padding()
 }

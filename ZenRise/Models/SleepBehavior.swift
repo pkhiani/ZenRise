@@ -29,7 +29,7 @@ struct SleepData: Codable, Identifiable, Equatable {
     }
 }
 
-struct SnoozePattern: Codable {
+struct SnoozePattern: Codable, Equatable {
     let date: Date
     let snoozeCount: Int
     let totalSnoozeTime: TimeInterval // Total time spent snoozing in seconds
@@ -81,12 +81,28 @@ class SleepBehaviorTracker: ObservableObject {
     }
     
     func addSnoozePattern(_ pattern: SnoozePattern) {
+        print("📊 SleepBehaviorTracker.addSnoozePattern called with: \(pattern)")
+        print("📊 Current patterns before: \(snoozePatterns)")
+        
         if let index = snoozePatterns.firstIndex(where: { Calendar.current.isDate($0.date, inSameDayAs: pattern.date) }) {
-            snoozePatterns[index] = pattern
+            print("📊 Updating existing pattern at index \(index)")
+            // Update the existing pattern with the new snooze count
+            let existingPattern = snoozePatterns[index]
+            let updatedPattern = SnoozePattern(
+                date: existingPattern.date,
+                snoozeCount: pattern.snoozeCount, // Use the new count
+                totalSnoozeTime: TimeInterval(pattern.snoozeCount * 300) // Recalculate total time
+            )
+            snoozePatterns[index] = updatedPattern
+            print("📊 Updated pattern: \(updatedPattern)")
         } else {
+            print("📊 Adding new pattern")
             snoozePatterns.append(pattern)
         }
+        
+        print("📊 Current patterns after: \(snoozePatterns)")
         saveData()
+        print("📊 Data saved successfully")
     }
     
     private func updateWeeklySummaries() {
@@ -163,31 +179,61 @@ class SleepBehaviorTracker: ObservableObject {
     // MARK: - Persistence
     
     private func saveData() {
+        print("🔍 DEBUG: saveData() called")
+        print("🔍 DEBUG: Saving \(sleepData.count) sleep data entries")
+        print("🔍 DEBUG: Saving \(snoozePatterns.count) snooze patterns: \(snoozePatterns)")
+        
         if let encoded = try? JSONEncoder().encode(sleepData) {
             userDefaults.set(encoded, forKey: sleepDataKey)
+            print("🔍 DEBUG: Sleep data saved successfully")
+        } else {
+            print("🔍 DEBUG: Failed to encode sleep data")
         }
+        
         if let encoded = try? JSONEncoder().encode(snoozePatterns) {
             userDefaults.set(encoded, forKey: snoozePatternsKey)
+            print("🔍 DEBUG: Snooze patterns saved successfully")
+        } else {
+            print("🔍 DEBUG: Failed to encode snooze patterns")
         }
+        
         if let encoded = try? JSONEncoder().encode(weeklySummaries) {
             userDefaults.set(encoded, forKey: weeklySummariesKey)
+            print("🔍 DEBUG: Weekly summaries saved successfully")
+        } else {
+            print("🔍 DEBUG: Failed to encode weekly summaries")
         }
     }
     
-    private func loadData() {
+    func loadData() {
+        print("🔍 DEBUG: SleepBehaviorTracker.loadData() called")
+        
         if let data = userDefaults.data(forKey: sleepDataKey),
            let decoded = try? JSONDecoder().decode([SleepData].self, from: data) {
             sleepData = decoded
+            print("🔍 DEBUG: Loaded \(sleepData.count) sleep data entries")
+        } else {
+            print("🔍 DEBUG: No sleep data found in UserDefaults")
         }
+        
         if let data = userDefaults.data(forKey: snoozePatternsKey),
            let decoded = try? JSONDecoder().decode([SnoozePattern].self, from: data) {
             snoozePatterns = decoded
+            print("🔍 DEBUG: Loaded \(snoozePatterns.count) snooze patterns: \(snoozePatterns)")
+        } else {
+            print("🔍 DEBUG: No snooze patterns found in UserDefaults")
         }
+        
         if let data = userDefaults.data(forKey: weeklySummariesKey),
            let decoded = try? JSONDecoder().decode([WeeklySummary].self, from: data) {
             weeklySummaries = decoded
+            print("🔍 DEBUG: Loaded \(weeklySummaries.count) weekly summaries")
+        } else {
+            print("🔍 DEBUG: No weekly summaries found in UserDefaults")
         }
+        
         updateWeeklySummaries()
+        print("🔍 DEBUG: loadData() completed")
     }
     
     // MARK: - Sample Data for Development

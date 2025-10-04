@@ -10,23 +10,11 @@ import Charts
 
 struct SleepGraphView: View {
     let sleepData: [SleepData]
-    @State private var selectedPeriod: TimePeriod = .week
-    
-    enum TimePeriod: String, CaseIterable {
-        case week = "Week"
-        case month = "Month"
-        
-        var days: Int {
-            switch self {
-            case .week: return 7
-            case .month: return 30
-            }
-        }
-    }
     
     private var filteredData: [SleepData] {
+        // Show last 14 days of daily data
         let calendar = Calendar.current
-        let cutoffDate = calendar.date(byAdding: .day, value: -selectedPeriod.days, to: Date()) ?? Date()
+        let cutoffDate = calendar.date(byAdding: .day, value: -14, to: Date()) ?? Date()
         return sleepData.filter { $0.date >= cutoffDate }.sorted { $0.date < $1.date }
     }
     
@@ -44,7 +32,7 @@ struct SleepGraphView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // Header with period selector
+            // Header
             HStack {
                 Text("Sleep Progress")
                     .font(.title2)
@@ -52,23 +40,16 @@ struct SleepGraphView: View {
                     .foregroundColor(.primary)
                 
                 Spacer()
-                
-                Picker("Period", selection: $selectedPeriod) {
-                    ForEach(TimePeriod.allCases, id: \.self) { period in
-                        Text(period.rawValue).tag(period)
-                    }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .frame(width: 120)
             }
             
-            // Chart
-            if chartData.isEmpty {
-                EmptyStateView()
-            } else {
-                SimpleSleepChart(data: chartData)
-                    .frame(height: 200)
-            }
+                // Chart
+                if chartData.isEmpty {
+                    EmptyStateView()
+                } else {
+                    SimpleSleepChart(data: chartData)
+                        .frame(height: 350)
+                        .padding(.bottom, 20)
+                }
             
             // Legend
             HStack(spacing: 20) {
@@ -126,30 +107,85 @@ struct LegendItem: View {
 struct SimpleSleepChart: View {
     let data: [SleepChartData]
     
-    private var minHour: Double { 5.0 }
-    private var maxHour: Double { 9.0 }
-    private var hourRange: Double { maxHour - minHour }
+    private var minHour: Double {
+        guard !data.isEmpty else { return 6.0 }
+        let allTimes = data.flatMap { [$0.actualWakeTime, $0.targetWakeTime] }
+        let minTime = allTimes.min() ?? Date()
+        return timeToHour(minTime)
+    }
     
-    private func yPosition(for time: Date) -> CGFloat {
+    private var maxHour: Double {
+        guard !data.isEmpty else { return 8.0 }
+        let allTimes = data.flatMap { [$0.actualWakeTime, $0.targetWakeTime] }
+        let maxTime = allTimes.max() ?? Date()
+        return timeToHour(maxTime)
+    }
+    
+    private var hourRange: Double { 
+        let range = maxHour - minHour
+        return max(range, 1.0) // Ensure minimum range of 1 hour
+    }
+    
+    private func timeToHour(_ time: Date) -> Double {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.hour, .minute], from: time)
         let totalMinutes = (components.hour ?? 0) * 60 + (components.minute ?? 0)
-        let hour = Double(totalMinutes) / 60.0
-        
+        return Double(totalMinutes) / 60.0
+    }
+    
+    private func yPosition(for time: Date) -> CGFloat {
+        let hour = timeToHour(time)
         let normalizedHour = (hour - minHour) / hourRange
-        return CGFloat(1.0 - normalizedHour) * 160 + 20 // 20px padding
+        return CGFloat(1.0 - normalizedHour) * 180 + 50 // 50px padding to avoid overlap
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+    
+    private func generateGridHours() -> [Double] {
+        guard !data.isEmpty else { return [6.0, 7.0, 8.0] }
+        
+        // Add some padding to the range
+        let paddedMin = floor(minHour) - 0.5
+        let paddedMax = ceil(maxHour) + 0.5
+        
+        var hours: [Double] = []
+        var currentHour = paddedMin
+        
+        while currentHour <= paddedMax {
+            hours.append(currentHour)
+            currentHour += 0.5 // 30-minute intervals
+        }
+        
+        return hours
+    }
+    
+    private func formatHour(_ hour: Double) -> String {
+        let hourInt = Int(hour)
+        let minute = hour.truncatingRemainder(dividingBy: 1.0) * 60
+        let minuteInt = Int(minute)
+        
+        if minuteInt == 0 {
+            return "\(hourInt):00"
+        } else {
+            return "\(hourInt):\(String(format: "%02d", minuteInt))"
+        }
     }
     
     var body: some View {
         ZStack {
             // Background grid
             VStack(spacing: 0) {
-                ForEach(5...9, id: \.self) { hour in
-                    HStack {
-                        Text("\(hour):00")
+                let gridHours = generateGridHours()
+                ForEach(gridHours, id: \.self) { hour in
+                    HStack(spacing: 8) {
+                        Text(formatHour(hour))
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                            .frame(width: 40, alignment: .trailing)
+                            .frame(width: 45, alignment: .trailing)
                         
                         Rectangle()
                             .fill(Color.gray.opacity(0.1))
@@ -166,8 +202,8 @@ struct SimpleSleepChart: View {
                     Path { path in
                         guard !data.isEmpty else { return }
                         
-                        let firstX = geometry.size.width * 0.1
-                        let lastX = geometry.size.width * 0.9
+                        let firstX = geometry.size.width * 0.15
+                        let lastX = geometry.size.width * 0.85
                         let targetY = yPosition(for: data.first!.targetWakeTime)
                         
                         path.move(to: CGPoint(x: firstX, y: targetY))
@@ -175,16 +211,40 @@ struct SimpleSleepChart: View {
                     }
                     .stroke(Color.mint.opacity(0.7), style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                     
-                    // Data points
+                    // Data points with connecting lines
                     ForEach(data.indices, id: \.self) { index in
                         let point = data[index]
-                        let x = geometry.size.width * 0.1 + (geometry.size.width * 0.8) * CGFloat(index) / CGFloat(max(data.count - 1, 1))
+                        let x = geometry.size.width * 0.15 + (geometry.size.width * 0.7) * CGFloat(index) / CGFloat(max(data.count - 1, 1))
                         let y = yPosition(for: point.actualWakeTime)
                         
+                        // Draw connecting line to previous point
+                        if index > 0 {
+                            let prevPoint = data[index - 1]
+                            let prevX = geometry.size.width * 0.15 + (geometry.size.width * 0.7) * CGFloat(index - 1) / CGFloat(max(data.count - 1, 1))
+                            let prevY = yPosition(for: prevPoint.actualWakeTime)
+                            
+                            Path { path in
+                                path.move(to: CGPoint(x: prevX, y: prevY))
+                                path.addLine(to: CGPoint(x: x, y: y))
+                            }
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        }
+                        
+                        // Data point
                         Circle()
                             .fill(point.isSuccessful ? Color.green : Color.orange)
-                            .frame(width: 8, height: 8)
+                            .frame(width: 10, height: 10)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                            )
                             .position(x: x, y: y)
+                        
+                        // Date label at bottom of chart
+                        Text(formatDate(point.date))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .position(x: x, y: geometry.size.height - 40)
                     }
                 }
             }

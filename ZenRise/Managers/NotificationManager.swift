@@ -190,43 +190,65 @@ class NotificationManager: NSObject, ObservableObject {
     }
     
     private func handleSnooze() {
+        print("🔍 DEBUG: handleSnooze called")
+        print("🔍 DEBUG: currentSnoozeCount before increment: \(self.currentSnoozeCount)")
+        
         self.currentSnoozeCount += 1
+        
+        print("⏰ Snooze triggered! Count: \(self.currentSnoozeCount)")
+        print("🔍 DEBUG: currentSnoozeCount after increment: \(self.currentSnoozeCount)")
         logger.info("Snooze triggered. Count: \(self.currentSnoozeCount)")
+        
+        // Record snooze data for analytics
+        print("🔍 DEBUG: About to call recordSnoozeData")
+        recordSnoozeData()
         
         // Schedule next alarm in 5 minutes
         let snoozeTime = Date().addingTimeInterval(300) // 5 minutes
+        print("⏰ Scheduling snooze alarm for \(snoozeTime)")
+        
         Task {
             await scheduleSnoozeAlarm(for: snoozeTime)
         }
     }
     
     private func handleStopAlarm() {
+        print("🔍 DEBUG: handleStopAlarm called")
+        print("🔍 DEBUG: Final snooze count before reset: \(self.currentSnoozeCount)")
         logger.info("Alarm stopped. Total snoozes: \(self.currentSnoozeCount)")
         
         // Record the sleep data
         if self.lastAlarmTime != nil {
+            print("🔍 DEBUG: Recording final sleep data")
             recordSleepData(actualWakeTime: Date(), snoozeCount: self.currentSnoozeCount)
         }
         
         // Reset snooze count
+        print("🔍 DEBUG: Resetting snooze count from \(self.currentSnoozeCount) to 0")
         self.currentSnoozeCount = 0
         self.lastAlarmTime = nil
+        print("🔍 DEBUG: Snooze count reset complete")
     }
     
     private func scheduleSnoozeAlarm(for time: Date) async {
+        // Get the current selected sound from settings
+        let selectedSound = settingsManager?.settings.themeSettings.selectedSound ?? .gentle
+        
         let content = UNMutableNotificationContent()
-        content.title = "ZenRise Alarm"
-        content.body = "Time to wake up! 🌅"
-        content.sound = .default
+        content.title = "ZenRise Alarm - Snooze"
+        content.body = "Time to wake up! 🌅 (Snooze #\(self.currentSnoozeCount))"
+        content.sound = await createNotificationSound(for: selectedSound)
         content.categoryIdentifier = "ALARM_CATEGORY"
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: time.timeIntervalSinceNow, repeats: false)
-        let request = UNNotificationRequest(identifier: "snoozeAlarm", content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: "snoozeAlarm_\(currentSnoozeCount)", content: content, trigger: trigger)
         
         do {
             try await notificationCenter.add(request)
+            print("⏰ Snooze alarm #\(currentSnoozeCount) scheduled for \(time)")
             logger.info("Snooze alarm scheduled for \(time)")
         } catch {
+            print("❌ Failed to schedule snooze alarm: \(error.localizedDescription)")
             logger.error("Failed to schedule snooze alarm: \(error.localizedDescription)")
         }
     }
@@ -253,17 +275,44 @@ class NotificationManager: NSObject, ObservableObject {
         // Record the data
         getSleepTracker()?.addSleepData(sleepData)
         
-        // Record snooze pattern if there were snoozes
-        if snoozeCount > 0 {
-            let snoozePattern = SnoozePattern(
-                date: Calendar.current.startOfDay(for: actualWakeTime),
-                snoozeCount: snoozeCount,
-                totalSnoozeTime: TimeInterval(snoozeCount * 300) // 5 minutes per snooze
-            )
-            getSleepTracker()?.addSnoozePattern(snoozePattern)
+        logger.info("Recorded sleep data: wake time \(actualWakeTime), snoozes \(snoozeCount)")
+    }
+    
+    private func recordSnoozeData() {
+        guard let sleepTracker = getSleepTracker() else {
+            print("❌ Could not access sleep tracker for snooze data")
+            logger.error("Could not access sleep tracker for snooze data")
+            return
         }
         
-        logger.info("Recorded sleep data: wake time \(actualWakeTime), snoozes \(snoozeCount)")
+        // Ensure UI updates happen on main thread
+        DispatchQueue.main.async {
+            let today = Calendar.current.startOfDay(for: Date())
+            
+            // Get the user's target wake time from settings
+            let targetWakeTime = self.getSettingsManager()?.settings.targetWakeUpTime ?? Date()
+            let actualWakeTime = Date() // Current time when snoozing
+            
+            let sleepData = SleepData(
+                date: today,
+                actualWakeTime: actualWakeTime,
+                targetWakeTime: targetWakeTime,
+                snoozeCount: self.currentSnoozeCount,
+                isSuccessful: actualWakeTime <= targetWakeTime,
+                alarmEnabled: true
+            )
+            
+            print("📊 About to record sleep data: \(sleepData)")
+            print("📊 Sleep tracker before: \(sleepTracker.sleepData.count) sleep data entries")
+            
+            sleepTracker.addSleepData(sleepData)
+            
+            print("📊 Sleep tracker after: \(sleepTracker.sleepData.count) sleep data entries")
+            print("📊 Recorded snooze data: \(self.currentSnoozeCount) snoozes today")
+            print("📊 All sleep data: \(sleepTracker.sleepData)")
+            
+            self.logger.info("Recorded snooze data: \(self.currentSnoozeCount) snoozes")
+        }
     }
     
     // Helper methods to access managers
