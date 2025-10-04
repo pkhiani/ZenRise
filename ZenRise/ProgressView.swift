@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ProgressView: View {
+struct LegacyProgressView: View {
     let wakeUpSchedule: WakeUpSchedule
     let startDate: Date
     
@@ -116,7 +116,7 @@ struct DayProgressRow: View {
 
 #Preview {
     NavigationStack {
-        ProgressView(
+        LegacyProgressView(
             wakeUpSchedule: WakeUpSchedule(
                 currentWakeUpTime: Date(),
                 targetWakeUpTime: Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()

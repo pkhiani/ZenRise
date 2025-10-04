@@ -7,13 +7,17 @@ struct UserSettings: Codable {
     var isAlarmEnabled: Bool
     var startDate: Date?
     var themeSettings: ClockThemeSettings
+    var hasCompletedOnboarding: Bool
+    var isSubscribed: Bool
     
     static let `default` = UserSettings(
         currentWakeUpTime: Calendar.current.date(from: DateComponents(hour: 8, minute: 0)) ?? Date(),
         targetWakeUpTime: Calendar.current.date(from: DateComponents(hour: 6, minute: 0)) ?? Date(),
         isAlarmEnabled: false,
         startDate: nil,
-        themeSettings: ClockThemeSettings()
+        themeSettings: ClockThemeSettings(),
+        hasCompletedOnboarding: false,
+        isSubscribed: false
     )
 }
 

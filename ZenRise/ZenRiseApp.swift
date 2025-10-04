@@ -12,12 +12,14 @@ import UserNotifications
 struct ZenRiseApp: App {
     @StateObject private var settingsManager = UserSettingsManager()
     @StateObject private var notificationManager = NotificationManager()
+    @StateObject private var sleepTracker = SleepBehaviorTracker()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(settingsManager)
                 .environmentObject(notificationManager)
+                .environmentObject(sleepTracker)
                 .onAppear {
                     setupApp()
                 }
@@ -25,14 +27,11 @@ struct ZenRiseApp: App {
     }
     
     private func setupApp() {
+        // Inject dependencies
+        notificationManager.settingsManager = settingsManager
+        notificationManager.sleepTracker = sleepTracker
+        
         // Setup notification categories
         notificationManager.setupNotificationCategories()
-        
-        // Request notification permission if not already granted
-        if !notificationManager.isAuthorized {
-            Task {
-                await notificationManager.requestPermission()
-            }
-        }
     }
 }

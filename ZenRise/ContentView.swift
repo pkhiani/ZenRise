@@ -11,6 +11,7 @@ struct ContentView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
     @EnvironmentObject var notificationManager: NotificationManager
     @State private var selectedTab = 0
+    @State private var hasRequestedInitialPermissions = false
     
     private var wakeUpSchedule: WakeUpSchedule {
         WakeUpSchedule(
@@ -20,21 +21,53 @@ struct ContentView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView(wakeUpSchedule: wakeUpSchedule)
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
+        Group {
+            if settingsManager.settings.hasCompletedOnboarding {
+                TabView(selection: $selectedTab) {
+                    HomeView(wakeUpSchedule: wakeUpSchedule)
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                        .tag(0)
+                    
+                    ProgressTabView()
+                        .tabItem {
+                            Label("Progress", systemImage: "chart.bar.fill")
+                        }
+                        .tag(1)
+                    
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings", systemImage: "gear")
+                        }
+                        .tag(2)
                 }
-                .tag(0)
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
+                .onChange(of: settingsManager.settings.isAlarmEnabled) { isEnabled in
+                    handleAlarmToggle(isEnabled: isEnabled)
                 }
-                .tag(1)
+                .onAppear {
+                    requestInitialPermissionsIfNeeded()
+                }
+            } else {
+                OnboardingFlowView(hasCompletedOnboarding: $settingsManager.settings.hasCompletedOnboarding)
+            }
         }
-        .onChange(of: settingsManager.settings.isAlarmEnabled) { isEnabled in
-            handleAlarmToggle(isEnabled: isEnabled)
+    }
+    
+    private func requestInitialPermissionsIfNeeded() {
+        // Only request permissions once when user first enters the app after onboarding
+        guard !hasRequestedInitialPermissions else { return }
+        hasRequestedInitialPermissions = true
+        
+        Task {
+            let granted = await notificationManager.requestPermission()
+            await MainActor.run {
+                if !granted {
+                    // If permissions were denied, we'll show a helpful message
+                    // The user can still use the app but alarms won't work
+                    print("Notification permissions denied - alarms will not work")
+                }
+            }
         }
     }
     

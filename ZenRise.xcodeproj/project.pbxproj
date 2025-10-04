@@ -32,9 +32,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4E23E8792D20C9DA00F34526 /* ZenRise */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-				Sounds/default_alarm = audio.mp3;
-			};
 			path = ZenRise;
 			sourceTree = "<group>";
 		};
@@ -414,7 +411,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pavan.ZenRise;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenrise.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -445,7 +442,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pavan.ZenRise;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenrise.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

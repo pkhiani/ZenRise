@@ -2,19 +2,18 @@ import SwiftUI
 import AVFoundation
 
 public class ClockThemeSettings: ObservableObject, Codable {
-    @Published public var currentHandColor: Color = .blue
+    @Published public var currentHandColor: Color = .mint
     @Published public var targetHandColor: Color = .green
     @Published public var showArcs: Bool = true
     @Published public var clockStyle: ClockStyle = .modern
     @Published public var clockSize: ClockSize = .medium
     @Published public var selectedSound: AlarmSound = .default
-    @Published public var volume: Double = 0.8
     
     public init() {}
     
     // MARK: - Codable
     enum CodingKeys: String, CodingKey {
-        case currentHandColor, targetHandColor, showArcs, clockStyle, clockSize, selectedSound, volume
+        case currentHandColor, targetHandColor, showArcs, clockStyle, clockSize, selectedSound
     }
     
     public required init(from decoder: Decoder) throws {
@@ -25,7 +24,6 @@ public class ClockThemeSettings: ObservableObject, Codable {
         clockStyle = try container.decode(ClockStyle.self, forKey: .clockStyle)
         clockSize = try container.decode(ClockSize.self, forKey: .clockSize)
         selectedSound = try container.decode(AlarmSound.self, forKey: .selectedSound)
-        volume = try container.decode(Double.self, forKey: .volume)
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -36,7 +34,6 @@ public class ClockThemeSettings: ObservableObject, Codable {
         try container.encode(clockStyle, forKey: .clockStyle)
         try container.encode(clockSize, forKey: .clockSize)
         try container.encode(selectedSound, forKey: .selectedSound)
-        try container.encode(volume, forKey: .volume)
     }
     
     public enum ClockStyle: String, CaseIterable, Codable {
