@@ -280,6 +280,53 @@ struct SettingsView: View {
                     }
                 }
                 
+                // Test Alarm Section (Development Only)
+                SettingsSectionCard(
+                    title: "Test Alarm",
+                    icon: "bell.badge.fill",
+                    color: .orange
+                ) {
+                    VStack(spacing: 16) {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "bell.badge.fill")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Test Alarm")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Schedule alarm for 10 seconds from now")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button("Test") {
+                                Task {
+                                    await notificationManager.scheduleTestAlarm(sound: selectedSound)
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.orange)
+                            )
+                        }
+                    }
+                }
+                
                 // About Section
                 SettingsSectionCard(
                     title: "About",

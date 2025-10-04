@@ -126,13 +126,27 @@ struct OnboardingSetupView: View {
     private func completeSetup() async {
         isLoading = true
         
+        print("🔔 Starting alarm setup...")
+        print("🔔 Current wake time: \(currentWakeTime)")
+        print("🔔 Target wake time: \(targetWakeTime)")
+        
         // Update user settings
         settingsManager.settings.currentWakeUpTime = currentWakeTime
         settingsManager.settings.targetWakeUpTime = targetWakeTime
         settingsManager.settings.themeSettings.selectedSound = selectedSound
         settingsManager.settings.startDate = Date()
         settingsManager.settings.isSubscribed = true // User completed subscription flow
-        settingsManager.settings.isAlarmEnabled = false // Will be enabled when user chooses to in main app
+        settingsManager.settings.isAlarmEnabled = true // Enable alarm after onboarding
+        
+        let nextWakeUp = wakeUpSchedule.timeUntilTarget.nextWakeUp
+        print("🔔 Calculated next wake up time: \(nextWakeUp)")
+        
+        // Schedule the alarm
+        print("🔔 Scheduling alarm for: \(nextWakeUp)")
+        await notificationManager.scheduleAlarm(
+            for: nextWakeUp,
+            sound: selectedSound
+        )
         
         // Simulate loading
         try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
@@ -309,6 +323,7 @@ struct SoundSetupStep: View {
     @Binding var selectedSound: ClockThemeSettings.AlarmSound
     let onBack: () -> Void
     let onNext: () -> Void
+    @StateObject private var soundManager = SoundManager()
     
     private let sounds: [(ClockThemeSettings.AlarmSound, String, String)] = [
         (.gentle, "Gentle Chime", "bell.fill"),
@@ -341,6 +356,7 @@ struct SoundSetupStep: View {
                         isSelected: selectedSound == sound.0,
                         onTap: {
                             selectedSound = sound.0
+                            soundManager.playSound(sound.0)
                         }
                     )
                 }

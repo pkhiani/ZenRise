@@ -42,7 +42,11 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
-    func scheduleAlarm(for wakeUpTime: Date, sound: ClockThemeSettings.AlarmSound) async {
+    func scheduleAlarm(for wakeUpTime: Date, sound: ClockThemeSettings.AlarmSound, isTestMode: Bool = false) async {
+        print("🔔 NotificationManager.scheduleAlarm called")
+        print("🔔 Wake up time: \(wakeUpTime)")
+        print("🔔 Sound: \(sound.rawValue)")
+        
         await cancelAllAlarms()
         
         // Reset snooze count and store alarm time
@@ -55,17 +59,32 @@ class NotificationManager: NSObject, ObservableObject {
         content.sound = await createNotificationSound(for: sound)
         content.categoryIdentifier = "ALARM_CATEGORY"
         
-        let calendar = Calendar.current
-        var dateComponents = calendar.dateComponents([.hour, .minute], from: wakeUpTime)
-        dateComponents.day = calendar.component(.day, from: Date()) + 1
+        let trigger: UNNotificationTrigger
         
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        if isTestMode {
+            // For testing: schedule alarm 10 seconds from now
+            let testTime = Date().addingTimeInterval(10)
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+            print("🧪 TEST MODE: Alarm scheduled for 10 seconds from now (\(testTime))")
+        } else {
+            // Normal mode: use the provided wake-up time
+            let calendar = Calendar.current
+            let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: wakeUpTime)
+            
+            print("🔔 Date components for trigger: \(dateComponents)")
+            trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        }
         let request = UNNotificationRequest(identifier: "wakeUpAlarm", content: content, trigger: trigger)
         
         do {
+            // Ensure notification categories are set up
+            setupNotificationCategories()
+            
             try await notificationCenter.add(request)
+            print("✅ Alarm successfully scheduled for \(wakeUpTime)")
             logger.info("Alarm scheduled for \(wakeUpTime)")
         } catch {
+            print("❌ Failed to schedule alarm: \(error.localizedDescription)")
             logger.error("Failed to schedule alarm: \(error.localizedDescription)")
         }
     }
@@ -75,11 +94,62 @@ class NotificationManager: NSObject, ObservableObject {
         logger.info("All alarms cancelled")
     }
     
+    // MARK: - Test Functions
+    func scheduleTestAlarm(sound: ClockThemeSettings.AlarmSound) async {
+        print("🧪 Scheduling test alarm...")
+        await scheduleAlarm(for: Date(), sound: sound, isTestMode: true)
+    }
+    
     private func createNotificationSound(for sound: ClockThemeSettings.AlarmSound) async -> UNNotificationSound {
+        print("🔊 Creating notification sound for: \(sound.rawValue)")
+        print("🔊 Looking for file: \(sound.filename).mp3")
+        
+        // First, check if file exists in bundle
         if let soundURL = Bundle.main.url(forResource: sound.filename, withExtension: "mp3") {
-            return UNNotificationSound(named: UNNotificationSoundName(soundURL.lastPathComponent))
+            print("✅ Found sound file at: \(soundURL)")
+            print("🔊 File name: \(soundURL.lastPathComponent)")
+            
+            // Check file size (iOS has restrictions on notification sounds)
+            do {
+                let fileAttributes = try FileManager.default.attributesOfItem(atPath: soundURL.path)
+                if let fileSize = fileAttributes[.size] as? Int {
+                    print("🔊 Sound file size: \(fileSize) bytes (\(fileSize / 1024) KB)")
+                    if fileSize > 30 * 1024 * 1024 { // 30MB limit
+                        print("⚠️ Sound file too large for notifications, using default")
+                        return .default
+                    }
+                }
+            } catch {
+                print("⚠️ Could not check file attributes: \(error)")
+            }
+            
+            // Try different approaches to create the notification sound
+            let fullFilename = "\(sound.filename).mp3"
+            print("🔊 Attempting to use custom sound: \(fullFilename)")
+            
+            // Method 1: Use full filename
+            let customSound = UNNotificationSound(named: UNNotificationSoundName(fullFilename))
+            print("🔊 Created custom notification sound: \(customSound)")
+            return customSound
+            
+        } else {
+            print("❌ Sound file not found: \(sound.filename).mp3")
+            print("🔊 Available resources in bundle:")
+            if let resourcePath = Bundle.main.resourcePath {
+                let resourceURL = URL(fileURLWithPath: resourcePath)
+                do {
+                    let contents = try FileManager.default.contentsOfDirectory(at: resourceURL, includingPropertiesForKeys: nil)
+                    let mp3Files = contents.filter { $0.pathExtension == "mp3" }
+                    for file in mp3Files {
+                        print("🔊 Found MP3: \(file.lastPathComponent)")
+                    }
+                } catch {
+                    print("🔊 Could not list bundle contents: \(error)")
+                }
+            }
+            print("🔊 Falling back to default sound")
+            return .default
         }
-        return .default
     }
     
     func setupNotificationCategories() {

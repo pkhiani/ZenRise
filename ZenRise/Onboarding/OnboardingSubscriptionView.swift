@@ -161,10 +161,10 @@ struct SubscriptionPlan {
     let savings: String?
     
     static let monthly = SubscriptionPlan(
-        id: "monthly",
-        title: "Monthly",
-        price: "$4.99/month",
-        period: "Billed monthly",
+        id: "weekly",
+        title: "Weekly",
+        price: "$1.99/week",
+        period: "Billed weekly",
         savings: nil
     )
 }

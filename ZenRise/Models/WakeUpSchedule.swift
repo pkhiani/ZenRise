@@ -38,9 +38,19 @@ struct WakeUpSchedule {
         let minutesAdjustment = min(adjustmentMinutesPerDay, daysNeeded > 0 ? adjustmentMinutesPerDay : 0)
         let adjustedMinutes = (currentMinutes - minutesAdjustment + 24 * 60) % (24 * 60)
         
+        let hour = adjustedMinutes / 60
+        let minute = adjustedMinutes % 60
+        
+        // Create a proper date for tomorrow with the calculated time
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let tomorrowComponents = calendar.dateComponents([.year, .month, .day], from: tomorrow)
+        
         var nextWakeUpComponents = DateComponents()
-        nextWakeUpComponents.hour = adjustedMinutes / 60
-        nextWakeUpComponents.minute = adjustedMinutes % 60
+        nextWakeUpComponents.year = tomorrowComponents.year
+        nextWakeUpComponents.month = tomorrowComponents.month
+        nextWakeUpComponents.day = tomorrowComponents.day
+        nextWakeUpComponents.hour = hour
+        nextWakeUpComponents.minute = minute
         
         return calendar.date(from: nextWakeUpComponents) ?? currentWakeUpTime
     }
