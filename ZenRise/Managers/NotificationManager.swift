@@ -42,6 +42,63 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
+    func schedulePreSleepQuizReminder(for wakeUpTime: Date) async {
+        // Cancel any existing quiz reminders first
+        await cancelQuizReminders()
+        
+        // Calculate sleep time based on wake up time
+        // Use 8 hours as default sleep duration
+        let sleepDuration = 8.0 // hours
+        let sleepTime = Calendar.current.date(byAdding: .hour, value: -Int(sleepDuration), to: wakeUpTime) ?? wakeUpTime
+        
+        // Schedule reminder 1 hour before sleep time
+        let reminderTime = Calendar.current.date(byAdding: .hour, value: -1, to: sleepTime) ?? sleepTime
+        
+        // Ensure the reminder is not more than 10 hours before wake time
+        let maxHoursBeforeWake = 10.0
+        let maxReminderTime = Calendar.current.date(byAdding: .hour, value: -Int(maxHoursBeforeWake), to: wakeUpTime) ?? wakeUpTime
+        
+        // Use the later of the calculated reminder time or the maximum allowed time
+        let finalReminderTime = max(reminderTime, maxReminderTime)
+        
+        // Don't schedule if the reminder time is in the past
+        guard finalReminderTime > Date() else {
+            print("⚠️ Pre-sleep quiz reminder time is in the past, skipping")
+            return
+        }
+        
+        print("🌙 Scheduling pre-sleep quiz reminder for \(finalReminderTime)")
+        print("🌙 Wake up time: \(wakeUpTime)")
+        print("🌙 Sleep time: \(sleepTime)")
+        print("🌙 Reminder time: \(finalReminderTime)")
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Sleep Readiness Check"
+        content.body = "Take a quick assessment to optimize your sleep preparation 🌙"
+        content.sound = .default
+        content.categoryIdentifier = "QUIZ_REMINDER_CATEGORY"
+        content.userInfo = [
+            "type": "sleep_readiness_quiz",
+            "action": "open_quiz"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: finalReminderTime)
+        
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let request = UNNotificationRequest(identifier: "preSleepQuizReminder", content: content, trigger: trigger)
+        
+        do {
+            setupQuizReminderCategories()
+            try await notificationCenter.add(request)
+            print("✅ Pre-sleep quiz reminder scheduled for \(finalReminderTime)")
+            logger.info("Pre-sleep quiz reminder scheduled for \(finalReminderTime)")
+        } catch {
+            print("❌ Failed to schedule pre-sleep quiz reminder: \(error.localizedDescription)")
+            logger.error("Failed to schedule pre-sleep quiz reminder: \(error.localizedDescription)")
+        }
+    }
+    
     func scheduleAlarm(for wakeUpTime: Date, sound: ClockThemeSettings.AlarmSound, isTestMode: Bool = false) async {
         print("🔔 NotificationManager.scheduleAlarm called")
         print("🔔 Wake up time: \(wakeUpTime)")
@@ -91,13 +148,53 @@ class NotificationManager: NSObject, ObservableObject {
     
     func cancelAllAlarms() async {
         notificationCenter.removeAllPendingNotificationRequests()
-        logger.info("All alarms cancelled")
+        logger.info("All alarms and quiz reminders cancelled")
+    }
+    
+    func cancelQuizReminders() async {
+        // Cancel all quiz-related notifications
+        let quizIdentifiers = ["preSleepQuizReminder"]
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: quizIdentifiers)
+        logger.info("Quiz reminders cancelled")
     }
     
     // MARK: - Test Functions
     func scheduleTestAlarm(sound: ClockThemeSettings.AlarmSound) async {
         print("🧪 Scheduling test alarm...")
         await scheduleAlarm(for: Date(), sound: sound, isTestMode: true)
+    }
+    
+    func scheduleTestQuizNotification() async {
+        print("🧪 Scheduling test quiz notification...")
+        
+        // Cancel any existing quiz reminders first
+        await cancelQuizReminders()
+        
+        // Schedule notification for 5 seconds from now
+        let testTime = Date().addingTimeInterval(5)
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Sleep Readiness Check"
+        content.body = "Take a quick assessment to optimize your sleep preparation 🌙"
+        content.sound = .default
+        content.categoryIdentifier = "QUIZ_REMINDER_CATEGORY"
+        content.userInfo = [
+            "type": "sleep_readiness_quiz",
+            "action": "open_quiz"
+        ]
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: "testQuizNotification", content: content, trigger: trigger)
+        
+        do {
+            setupQuizReminderCategories()
+            try await notificationCenter.add(request)
+            print("✅ Test quiz notification scheduled for 5 seconds from now")
+            logger.info("Test quiz notification scheduled")
+        } catch {
+            print("❌ Failed to schedule test quiz notification: \(error.localizedDescription)")
+            logger.error("Failed to schedule test quiz notification: \(error.localizedDescription)")
+        }
     }
     
     private func createNotificationSound(for sound: ClockThemeSettings.AlarmSound) async -> UNNotificationSound {
@@ -152,6 +249,35 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
+    func setupQuizReminderCategories() {
+        let takeQuizAction = UNNotificationAction(
+            identifier: "TAKE_QUIZ_ACTION",
+            title: "Take Assessment",
+            options: [.foreground]
+        )
+        
+        let remindLaterAction = UNNotificationAction(
+            identifier: "REMIND_LATER_ACTION",
+            title: "Remind in 30 min",
+            options: []
+        )
+        
+        let dismissAction = UNNotificationAction(
+            identifier: "DISMISS_ACTION",
+            title: "Dismiss",
+            options: [.destructive]
+        )
+        
+        let quizCategory = UNNotificationCategory(
+            identifier: "QUIZ_REMINDER_CATEGORY",
+            actions: [takeQuizAction, remindLaterAction, dismissAction],
+            intentIdentifiers: [],
+            options: []
+        )
+        
+        notificationCenter.setNotificationCategories([quizCategory])
+    }
+    
     func setupNotificationCategories() {
         let snoozeAction = UNNotificationAction(
             identifier: "SNOOZE_ACTION",
@@ -179,11 +305,26 @@ class NotificationManager: NSObject, ObservableObject {
     }
     
     func handleNotificationResponse(_ response: UNNotificationResponse) {
+        // Check if this is a quiz notification by userInfo
+        if let userInfo = response.notification.request.content.userInfo as? [String: Any],
+           let type = userInfo["type"] as? String,
+           type == "sleep_readiness_quiz" {
+            handleTakeQuiz()
+            return
+        }
+        
+        // Handle action button responses
         switch response.actionIdentifier {
         case "SNOOZE_ACTION":
             handleSnooze()
         case "STOP_ACTION":
             handleStopAlarm()
+        case "TAKE_QUIZ_ACTION":
+            handleTakeQuiz()
+        case "REMIND_LATER_ACTION":
+            handleRemindLater()
+        case "DISMISS_ACTION":
+            handleDismissQuiz()
         default:
             break
         }
@@ -322,6 +463,47 @@ class NotificationManager: NSObject, ObservableObject {
     
     private func getSleepTracker() -> SleepBehaviorTracker? {
         return sleepTracker
+    }
+    
+    // MARK: - Quiz Notification Handlers
+    
+    private func handleTakeQuiz() {
+        print("📝 User chose to take quiz from notification")
+        logger.info("User chose to take quiz from notification")
+        
+        // Post notification to open quiz in app
+        NotificationCenter.default.post(name: .openSleepReadinessQuiz, object: nil)
+    }
+    
+    private func handleRemindLater() {
+        print("⏰ User chose to be reminded later")
+        logger.info("User chose to be reminded later")
+        
+        // Schedule reminder for 30 minutes later
+        let reminderTime = Date().addingTimeInterval(30 * 60) // 30 minutes
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Sleep Readiness Check"
+        content.body = "Ready for your sleep assessment? 🌙"
+        content.sound = .default
+        content.categoryIdentifier = "QUIZ_REMINDER_CATEGORY"
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 30 * 60, repeats: false)
+        let request = UNNotificationRequest(identifier: "preSleepQuizReminder_\(Date().timeIntervalSince1970)", content: content, trigger: trigger)
+        
+        Task {
+            do {
+                try await notificationCenter.add(request)
+                print("✅ Quiz reminder scheduled for 30 minutes later")
+            } catch {
+                print("❌ Failed to schedule quiz reminder: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func handleDismissQuiz() {
+        print("❌ User dismissed quiz notification")
+        logger.info("User dismissed quiz notification")
     }
 }
 

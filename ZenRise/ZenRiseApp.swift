@@ -13,6 +13,7 @@ struct ZenRiseApp: App {
     @StateObject private var settingsManager = UserSettingsManager()
     @StateObject private var notificationManager = NotificationManager()
     @StateObject private var sleepTracker = SleepBehaviorTracker()
+    @StateObject private var quizManager = SleepReadinessQuizManager()
     
     var body: some Scene {
         WindowGroup {
@@ -20,6 +21,7 @@ struct ZenRiseApp: App {
                 .environmentObject(settingsManager)
                 .environmentObject(notificationManager)
                 .environmentObject(sleepTracker)
+                .environmentObject(quizManager)
                 .onAppear {
                     setupApp()
                 }
@@ -33,5 +35,6 @@ struct ZenRiseApp: App {
         
         // Setup notification categories
         notificationManager.setupNotificationCategories()
+        notificationManager.setupQuizReminderCategories()
     }
 }

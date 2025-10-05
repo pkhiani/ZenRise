@@ -10,13 +10,17 @@ import SwiftUI
 struct ProgressTabView: View {
     @EnvironmentObject var sleepTracker: SleepBehaviorTracker
     @EnvironmentObject var settingsManager: UserSettingsManager
+    @EnvironmentObject var quizManager: SleepReadinessQuizManager
+    @Binding var showQuizFromNotification: Bool
     @State private var selectedTab: ProgressTab = .overview
+    @State private var showQuiz = false
     
     enum ProgressTab: String, CaseIterable {
         case overview = "Overview"
         case sleep = "Sleep Graph"
         case snooze = "Snooze"
         case streak = "Streak"
+        case readiness = "Readiness"
         
         var icon: String {
             switch self {
@@ -24,6 +28,7 @@ struct ProgressTabView: View {
             case .sleep: return "chart.line.uptrend.xyaxis"
             case .snooze: return "bell.fill"
             case .streak: return "flame.fill"
+            case .readiness: return "moon.zzz.fill"
             }
         }
     }
@@ -81,11 +86,12 @@ struct ProgressTabView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         switch selectedTab {
-                    case .overview:
+                        case .overview:
                         ProgressOverviewView(
                             sleepTracker: sleepTracker,
                             wakeUpSchedule: wakeUpSchedule
                         )
+                        .environmentObject(quizManager)
                         case .sleep:
                             SleepGraphView(sleepData: sleepTracker.sleepData)
                         case .snooze:
@@ -93,6 +99,8 @@ struct ProgressTabView: View {
                         case .streak:
                             StreakTrackerView(sleepData: sleepTracker.sleepData)
                                 .environmentObject(settingsManager)
+                        case .readiness:
+                            SleepReadinessTrackerView(quizManager: quizManager, showQuiz: $showQuiz)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -112,6 +120,16 @@ struct ProgressTabView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showQuiz) {
+            SleepReadinessQuizView(quizManager: quizManager)
+        }
+        .onChange(of: showQuizFromNotification) { _, shouldShow in
+            if shouldShow {
+                selectedTab = .readiness
+                showQuiz = true
+                showQuizFromNotification = false
+            }
+        }
     }
 }
 
@@ -151,6 +169,7 @@ struct ProgressTabButton: View {
 struct ProgressOverviewView: View {
     @ObservedObject var sleepTracker: SleepBehaviorTracker
     @EnvironmentObject var settingsManager: UserSettingsManager
+    @EnvironmentObject var quizManager: SleepReadinessQuizManager
     let wakeUpSchedule: WakeUpSchedule
     
     private var currentStreak: Int {
@@ -168,8 +187,29 @@ struct ProgressOverviewView: View {
         return Double(successfulDays) / Double(totalDays)
     }
     
-    private var averageWakeTime: Date {
-        sleepTracker.getAverageWakeTime()
+    private var sleepReadinessAverage: Double {
+        quizManager.getAverageScore()
+    }
+    
+    private var sleepReadinessCategory: SleepReadinessScore.ScoreCategory {
+        switch sleepReadinessAverage {
+        case 0.8...1.0: return .excellent
+        case 0.6..<0.8: return .good
+        case 0.4..<0.6: return .fair
+        case 0.2..<0.4: return .poor
+        default: return .veryPoor
+        }
+    }
+    
+    private var sleepReadinessColor: Color {
+        switch sleepReadinessCategory.color {
+        case "green": return .green
+        case "mint": return .mint
+        case "yellow": return .yellow
+        case "orange": return .orange
+        case "red": return .red
+        default: return .green
+        }
     }
     
     var body: some View {
@@ -204,12 +244,12 @@ struct ProgressOverviewView: View {
                 )
                 
                 OverviewStatCard(
-                    title: "Avg Wake Time",
-                    value: averageWakeTime.formatted(date: .omitted, time: .shortened),
-                    subtitle: "recent days",
-                    icon: "clock.fill",
-                    color: .mint,
-                    isHighlighted: false
+                    title: "Sleep Readiness",
+                    value: "\(Int(sleepReadinessAverage * 100))",
+                    subtitle: sleepReadinessCategory.rawValue,
+                    icon: "moon.zzz.fill",
+                    color: sleepReadinessColor,
+                    isHighlighted: sleepReadinessAverage >= 0.6
                 )
             }
             
@@ -466,7 +506,8 @@ struct RecentActivityRow: View {
 }
 
 #Preview {
-    ProgressTabView()
+    ProgressTabView(showQuizFromNotification: .constant(false))
         .environmentObject(UserSettingsManager())
         .environmentObject(SleepBehaviorTracker())
+        .environmentObject(SleepReadinessQuizManager())
 }

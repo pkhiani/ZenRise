@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
     @EnvironmentObject var notificationManager: NotificationManager
     @EnvironmentObject var sleepTracker: SleepBehaviorTracker
+    @EnvironmentObject var quizManager: SleepReadinessQuizManager
     @StateObject private var soundManager = SoundManager()
     @State private var showingResetAlert = false
     @State private var selectedSound: ClockThemeSettings.AlarmSound = .default
@@ -327,6 +328,53 @@ struct SettingsView: View {
                     }
                 }
                 
+                // Test Quiz Notification Section (Development Only)
+                SettingsSectionCard(
+                    title: "Test Quiz Notification",
+                    icon: "moon.zzz.fill",
+                    color: .green
+                ) {
+                    VStack(spacing: 16) {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.green.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "moon.zzz.fill")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.green)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Test Quiz Notification")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Send sleep readiness quiz notification now")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button("Test") {
+                                Task {
+                                    await notificationManager.scheduleTestQuizNotification()
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.green)
+                            )
+                        }
+                    }
+                }
+                
                 // About Section
                 SettingsSectionCard(
                     title: "About",
@@ -400,9 +448,10 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) { }
             Button("Reset", role: .destructive) {
                 sleepTracker.clearAllData()
+                quizManager.clearAllData()
             }
         } message: {
-            Text("This will permanently delete all your sleep progress data, including wake-up times, snooze patterns, and streaks. This action cannot be undone.")
+            Text("This will permanently delete all your sleep progress data, including wake-up times, snooze patterns, streaks, and sleep readiness assessments. This action cannot be undone.")
         }
     }
 }

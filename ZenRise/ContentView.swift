@@ -10,8 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
     @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var quizManager: SleepReadinessQuizManager
     @State private var selectedTab = 0
     @State private var hasRequestedInitialPermissions = false
+    @State private var showQuizFromNotification = false
     
     private var wakeUpSchedule: WakeUpSchedule {
         WakeUpSchedule(
@@ -30,13 +32,15 @@ struct ContentView: View {
                         }
                         .tag(0)
                     
-                    ProgressTabView()
+                    ProgressTabView(showQuizFromNotification: $showQuizFromNotification)
+                        .environmentObject(quizManager)
                         .tabItem {
                             Label("Progress", systemImage: "chart.bar.fill")
                         }
                         .tag(1)
                     
                     SettingsView()
+                        .environmentObject(quizManager)
                         .tabItem {
                             Label("Settings", systemImage: "gear")
                         }
@@ -47,6 +51,10 @@ struct ContentView: View {
                 }
                 .onAppear {
                     requestInitialPermissionsIfNeeded()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openSleepReadinessQuiz)) { _ in
+                    selectedTab = 1 // Switch to Progress tab
+                    showQuizFromNotification = true
                 }
             } else {
                 OnboardingFlowView(hasCompletedOnboarding: $settingsManager.settings.hasCompletedOnboarding)
@@ -80,6 +88,10 @@ struct ContentView: View {
                     await notificationManager.scheduleAlarm(
                         for: wakeUpSchedule.timeUntilTarget.nextWakeUp,
                         sound: settingsManager.settings.themeSettings.selectedSound
+                    )
+                    // Schedule pre-sleep quiz reminder
+                    await notificationManager.schedulePreSleepQuizReminder(
+                        for: wakeUpSchedule.timeUntilTarget.nextWakeUp
                     )
                 } else {
                     await MainActor.run {
