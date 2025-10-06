@@ -11,9 +11,11 @@ struct ContentView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
     @EnvironmentObject var alarmManager: UnifiedAlarmManager
     @EnvironmentObject var quizManager: SleepReadinessQuizManager
+    @EnvironmentObject var revenueCatManager: RevenueCatManager
     @State private var selectedTab = 0
     @State private var hasRequestedInitialPermissions = false
     @State private var showQuizFromNotification = false
+    @State private var isCheckingSubscription = true
     
     private var wakeUpSchedule: WakeUpSchedule {
         WakeUpSchedule(
@@ -24,7 +26,21 @@ struct ContentView: View {
     
     var body: some View {
         Group {
-            if settingsManager.settings.hasCompletedOnboarding {
+            if isCheckingSubscription {
+                // Show loading while checking subscription status
+                VStack {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Checking subscription...")
+                        .font(.headline)
+                        .padding(.top)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .task {
+                    await checkSubscriptionAndRedirect()
+                }
+            } else if settingsManager.settings.hasCompletedOnboarding {
                 TabView(selection: $selectedTab) {
                     HomeView(wakeUpSchedule: wakeUpSchedule)
                         .tabItem {
@@ -59,6 +75,29 @@ struct ContentView: View {
             } else {
                 OnboardingFlowView(hasCompletedOnboarding: $settingsManager.settings.hasCompletedOnboarding)
             }
+        }
+    }
+    
+    private func checkSubscriptionAndRedirect() async {
+        // Check if user has completed onboarding
+        guard settingsManager.settings.hasCompletedOnboarding else {
+            await MainActor.run {
+                isCheckingSubscription = false
+            }
+            return
+        }
+        
+        // Check subscription status
+        let hasActiveSubscription = await revenueCatManager.checkAndRedirectIfExpired()
+        
+        await MainActor.run {
+            if !hasActiveSubscription {
+                // Subscription expired - reset onboarding and redirect to subscription
+                print("🔄 Subscription expired - redirecting to onboarding")
+                settingsManager.settings.hasCompletedOnboarding = false
+                settingsManager.settings.isSubscribed = false
+            }
+            isCheckingSubscription = false
         }
     }
     

@@ -24,6 +24,20 @@ class RevenueCatManager: NSObject, ObservableObject {
         setupRevenueCat()
     }
     
+    func checkAndRedirectIfExpired() async -> Bool {
+        // Check current subscription status
+        await checkSubscriptionStatus()
+        
+        // If not subscribed, user needs to go through onboarding again
+        if !isSubscribed {
+            print("⚠️ Subscription expired or not active - user needs to resubscribe")
+            return false // Indicates user needs to go through onboarding
+        }
+        
+        print("✅ Subscription is active - user can continue")
+        return true // Indicates user can continue with the app
+    }
+    
     private func setupRevenueCat() {
         Purchases.logLevel = .debug
         Purchases.configure(withAPIKey: apiKey)
@@ -48,9 +62,11 @@ class RevenueCatManager: NSObject, ObservableObject {
                     return
                 }
                 
-                // Check if user has active subscription
-                self?.isSubscribed = customerInfo?.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+                // Check if user has active subscription (without entitlements)
+                let hasActiveSubscription = customerInfo?.activeSubscriptions.count ?? 0 > 0
+                self?.isSubscribed = hasActiveSubscription
                 print("✅ Subscription status: \(self?.isSubscribed ?? false)")
+                print("📊 Active subscriptions count: \(customerInfo?.activeSubscriptions.count ?? 0)")
             }
         }
     }
@@ -62,8 +78,11 @@ class RevenueCatManager: NSObject, ObservableObject {
             let customerInfo = try await Purchases.shared.customerInfo()
             await MainActor.run {
                 self.isLoading = false
-                self.isSubscribed = customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+                // Check for active subscriptions instead of entitlements
+                let hasActiveSubscription = customerInfo.activeSubscriptions.count > 0
+                self.isSubscribed = hasActiveSubscription
                 print("✅ Async subscription status: \(self.isSubscribed)")
+                print("📊 Active subscriptions count: \(customerInfo.activeSubscriptions.count)")
             }
         } catch {
             await MainActor.run {
@@ -108,16 +127,29 @@ class RevenueCatManager: NSObject, ObservableObject {
             
             print("✅ Purchase completed successfully")
             print("📊 Customer info entitlements: \(result.customerInfo.entitlements)")
+            print("📊 All entitlements: \(result.customerInfo.entitlements.all)")
+            print("📊 Active entitlements: \(result.customerInfo.entitlements.active)")
             
-            let isActive = result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
-            print("🎯 Premium entitlement active: \(isActive)")
+            // Check if any entitlement is active (fallback)
+            let hasAnyActiveEntitlement = !result.customerInfo.entitlements.active.isEmpty
+            let isActive = result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true || hasAnyActiveEntitlement
+            
+            print("🎯 Premium entitlement active: \(result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true)")
+            print("🎯 Has any active entitlement: \(hasAnyActiveEntitlement)")
+            print("🎯 Final isActive: \(isActive)")
+            
+            // For now, consider any successful purchase as active
+            // This works even without entitlements configured
+            let purchaseSuccessful = result.transaction != nil || result.customerInfo.activeSubscriptions.count > 0
             
             await MainActor.run {
                 self.isLoading = false
                 self.isSubscribed = isActive
             }
             
-            return isActive
+            print("🎯 Purchase successful: \(purchaseSuccessful)")
+            print("🎯 Active subscriptions count: \(result.customerInfo.activeSubscriptions.count)")
+            return purchaseSuccessful
         } catch {
             print("❌ Purchase failed: \(error)")
             await MainActor.run {

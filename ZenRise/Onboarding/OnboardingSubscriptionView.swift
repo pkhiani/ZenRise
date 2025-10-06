@@ -161,16 +161,21 @@ struct OnboardingSubscriptionView: View {
         print("📊 Purchase result: \(success)")
         
         // Wait a moment for subscription status to update
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
         
-        // Check subscription status again
-        await revenueCatManager.checkSubscriptionStatus()
-        print("📊 Final subscription status: \(revenueCatManager.isSubscribed)")
         
         await MainActor.run {
             isLoading = false
             
             if success {
+                // Force subscription status to true since purchase was successful
+                revenueCatManager.isSubscribed = true
+                print("🔧 Forcing subscription status to true after successful purchase")
+
+                        // Check subscription status again
+                revenueCatManager.checkSubscriptionStatus()
+                print("📊 Final subscription status: \(revenueCatManager.isSubscribed)")
+                
                 // Only proceed if purchase was actually successful
                 print("✅ Purchase successful, proceeding to next screen...")
                 print("🔍 Current step before change: \(currentStep)")

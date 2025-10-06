@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4EE7F6952E9462C2003D26A2 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 4EE7F6942E9462C2003D26A2 /* RevenueCat */; };
+		4EE7F69F2E947D35003D26A2 /* test.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 4EE7F69E2E947D35003D26A2 /* test.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +32,7 @@
 		4E23E8772D20C9DA00F34526 /* ZenRise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZenRise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E23E8872D20C9DB00F34526 /* ZenRiseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenRiseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E23E8912D20C9DB00F34526 /* ZenRiseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenRiseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4EE7F69E2E947D35003D26A2 /* test.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = test.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -93,6 +95,7 @@
 		4E23E86E2D20C9D900F34526 = {
 			isa = PBXGroup;
 			children = (
+				4EE7F69E2E947D35003D26A2 /* test.storekit */,
 				4E23E8792D20C9DA00F34526 /* ZenRise */,
 				4E23E88A2D20C9DB00F34526 /* ZenRiseTests */,
 				4E23E8942D20C9DB00F34526 /* ZenRiseUITests */,
@@ -234,6 +237,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4EE7F69F2E947D35003D26A2 /* test.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
