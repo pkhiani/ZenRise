@@ -17,18 +17,18 @@ struct ProgressTabView: View {
     
     enum ProgressTab: String, CaseIterable {
         case overview = "Overview"
+        case readiness = "Readiness"
         case sleep = "Sleep Graph"
         case snooze = "Snooze"
         case streak = "Streak"
-        case readiness = "Readiness"
         
         var icon: String {
             switch self {
             case .overview: return "chart.bar.fill"
+            case .readiness: return "moon.zzz.fill"
             case .sleep: return "chart.line.uptrend.xyaxis"
             case .snooze: return "bell.fill"
             case .streak: return "flame.fill"
-            case .readiness: return "moon.zzz.fill"
             }
         }
     }
@@ -92,6 +92,8 @@ struct ProgressTabView: View {
                             wakeUpSchedule: wakeUpSchedule
                         )
                         .environmentObject(quizManager)
+                        case .readiness:
+                            SleepReadinessTrackerView(quizManager: quizManager, showQuiz: $showQuiz)
                         case .sleep:
                             SleepGraphView(sleepData: sleepTracker.sleepData)
                         case .snooze:
@@ -99,8 +101,6 @@ struct ProgressTabView: View {
                         case .streak:
                             StreakTrackerView(sleepData: sleepTracker.sleepData)
                                 .environmentObject(settingsManager)
-                        case .readiness:
-                            SleepReadinessTrackerView(quizManager: quizManager, showQuiz: $showQuiz)
                         }
                     }
                     .padding(.horizontal, 20)

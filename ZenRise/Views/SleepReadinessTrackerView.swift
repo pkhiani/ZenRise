@@ -15,9 +15,6 @@ struct SleepReadinessTrackerView: View {
         quizManager.getAverageScore()
     }
     
-    private var scoreTrend: [Double] {
-        quizManager.getScoreTrend()
-    }
     
     private var mostCommonIssues: [QuizQuestionType] {
         quizManager.getMostCommonIssues()
@@ -82,11 +79,6 @@ struct SleepReadinessTrackerView: View {
                 VStack(spacing: 20) {
                     // Average score
                     AverageScoreCard(averageScore: averageScore)
-                    
-                    // Score trend chart
-                    if scoreTrend.count > 1 {
-                        ScoreTrendCard(scores: scoreTrend)
-                    }
                     
                     // Common issues
                     if !mostCommonIssues.isEmpty {
@@ -182,15 +174,17 @@ struct CurrentScoreCard: View {
                                 .foregroundColor(.secondary)
                             
                             ForEach(Array(score.recommendations.prefix(2).enumerated()), id: \.offset) { index, recommendation in
-                                HStack(spacing: 6) {
+                                HStack(alignment: .top, spacing: 6) {
                                     Circle()
                                         .fill(scoreColor)
                                         .frame(width: 4, height: 4)
+                                        .padding(.top, 2)
                                     
                                     Text(recommendation)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                        .lineLimit(1)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
                         }
@@ -354,47 +348,6 @@ struct AverageScoreCard: View {
     }
 }
 
-struct ScoreTrendCard: View {
-    let scores: [Double]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Score Trend")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            // Simple line chart representation
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(Array(scores.enumerated()), id: \.offset) { index, score in
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.green, Color.mint],
-                                    startPoint: .bottom,
-                                    endPoint: .top
-                                )
-                            )
-                            .frame(width: 20, height: max(20, CGFloat(score * 60)))
-                            .animation(.easeInOut(duration: 0.5).delay(Double(index) * 0.1), value: score)
-                        
-                        Text("\(index + 1)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .frame(height: 80)
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-        )
-    }
-}
 
 struct CommonIssuesCard: View {
     let issues: [QuizQuestionType]
