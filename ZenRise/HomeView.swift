@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
-    @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var alarmManager: UnifiedAlarmManager
     let wakeUpSchedule: WakeUpSchedule
     
     private var nextWakeUpTimeString: String {
@@ -141,7 +141,7 @@ struct TimeCard: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+                .shadow(color: Color.primary.opacity(0.1), radius: 12, x: 0, y: 4)
         )
     }
 }
@@ -239,7 +239,7 @@ struct AlarmStatusCard: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                .shadow(color: Color.primary.opacity(0.15), radius: 12, x: 0, y: 4)
         )
         .padding(.horizontal, 20)
     }
@@ -309,7 +309,7 @@ struct EnableAlarmCard: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                .shadow(color: Color.primary.opacity(0.15), radius: 12, x: 0, y: 4)
         )
         .padding(.horizontal, 20)
     }

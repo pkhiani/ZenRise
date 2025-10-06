@@ -64,7 +64,7 @@ struct SleepGraphView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -188,7 +188,7 @@ struct SimpleSleepChart: View {
                             .frame(width: 45, alignment: .trailing)
                         
                         Rectangle()
-                            .fill(Color.gray.opacity(0.1))
+                            .fill(Color(.systemGray6))
                             .frame(height: 1)
                     }
                     .frame(height: 40)
@@ -227,7 +227,7 @@ struct SimpleSleepChart: View {
                                 path.move(to: CGPoint(x: prevX, y: prevY))
                                 path.addLine(to: CGPoint(x: x, y: y))
                             }
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
                         }
                         
                         // Data point

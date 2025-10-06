@@ -149,7 +149,7 @@ struct FeatureRow: View {
                 
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.green)
+                    .foregroundColor(.white)
             }
             
             Text(text)
@@ -206,7 +206,7 @@ struct QuizContentView: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color(.systemGray5))
                             .frame(height: 8)
                         
                         RoundedRectangle(cornerRadius: 4)
@@ -369,7 +369,7 @@ struct AnswerButton: View {
                             endPoint: .trailing
                         ) :
                         LinearGradient(
-                            colors: [Color.white, Color(.systemGroupedBackground)],
+                            colors: [Color(.systemBackground), Color(.systemGroupedBackground)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -377,13 +377,13 @@ struct AnswerButton: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(
-                                isSelected ? Color.clear : Color.gray.opacity(0.2),
+                                isSelected ? Color.clear : Color(.systemGray4),
                                 lineWidth: 1
                             )
                     )
             )
             .shadow(
-                color: isSelected ? answerColor.opacity(0.3) : Color.black.opacity(0.05),
+                color: isSelected ? answerColor.opacity(0.3) : Color.primary.opacity(0.1),
                 radius: isSelected ? 8 : 4,
                 x: 0,
                 y: isSelected ? 4 : 2
@@ -475,8 +475,8 @@ struct QuizResultsView: View {
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
                     )
                 }
                 

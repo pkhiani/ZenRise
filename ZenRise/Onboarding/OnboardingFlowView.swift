@@ -62,5 +62,5 @@ struct OnboardingFlowView: View {
 #Preview {
     OnboardingFlowView(hasCompletedOnboarding: .constant(false))
         .environmentObject(UserSettingsManager())
-        .environmentObject(NotificationManager())
+        .environmentObject(UnifiedAlarmManager())
 }

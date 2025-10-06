@@ -132,7 +132,7 @@ struct StreakTrackerView: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color(.systemGray5))
                             .frame(height: 8)
                         
                         RoundedRectangle(cornerRadius: 4)
@@ -176,7 +176,7 @@ struct StreakTrackerView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
         .onAppear {
             updateStreakData()

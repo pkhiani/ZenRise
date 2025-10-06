@@ -79,7 +79,7 @@ struct ProgressTabView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 0)
                         .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                        .shadow(color: Color.primary.opacity(0.1), radius: 2, x: 0, y: 1)
                 )
                 
                 // Content
@@ -157,7 +157,7 @@ struct ProgressTabButton: View {
                           LinearGradient(colors: [Color.green, Color.mint], startPoint: .leading, endPoint: .trailing) :
                           LinearGradient(colors: [Color(.systemGray6)], startPoint: .leading, endPoint: .trailing)
                     )
-                    .shadow(color: isSelected ? .green.opacity(0.3) : .black.opacity(0.05), radius: isSelected ? 4 : 2, x: 0, y: 1)
+                    .shadow(color: isSelected ? .green.opacity(0.3) : Color.primary.opacity(0.1), radius: isSelected ? 4 : 2, x: 0, y: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -281,7 +281,7 @@ struct ProgressOverviewView: View {
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
             )
             
             // Recent activity
@@ -302,7 +302,7 @@ struct ProgressOverviewView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                        .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
                 )
             }
         }
@@ -353,7 +353,7 @@ struct OverviewStatCard: View {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(isHighlighted ? color.opacity(0.3) : Color.clear, lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 4, x: 0, y: 2)
         )
     }
 }
@@ -395,7 +395,7 @@ struct ProgressSummaryCard: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color(.systemGray5))
                             .frame(height: 12)
                         
                         RoundedRectangle(cornerRadius: 6)

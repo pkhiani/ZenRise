@@ -29,15 +29,14 @@ struct OnboardingSubscriptionView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            .padding(.top, 40)
+            .padding(.top, 60)
             .padding(.horizontal, 32)
             
             Spacer()
             
             // Benefits List
-            VStack(spacing: 16) {
+            VStack(spacing: 20) {
                 SubscriptionBenefit(icon: "infinity", text: "Unlimited alarm adjustments")
-                SubscriptionBenefit(icon: "waveform", text: "Full access to premium sounds")
                 SubscriptionBenefit(icon: "chart.bar.fill", text: "Advanced progress tracking")
                 SubscriptionBenefit(icon: "bell.badge", text: "Smart snooze insights")
                 SubscriptionBenefit(icon: "moon.zzz.fill", text: "Sleep cycle optimization")
@@ -73,6 +72,7 @@ struct OnboardingSubscriptionView: View {
                     .foregroundColor(.secondary)
             }
             .padding(.horizontal, 32)
+            .padding(.bottom, 20)
             
             // Navigation Buttons
             VStack(spacing: 16) {
@@ -119,7 +119,7 @@ struct OnboardingSubscriptionView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
             }
@@ -226,15 +226,15 @@ struct SubscriptionPlanCard: View {
                 Spacer()
             }
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .overlay(
+                    .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(isSelected ? Color.green : Color.clear, lineWidth: 2)
+                            .fill(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(isSelected ? Color.green : Color(.systemGray4), lineWidth: 2)
+                            )
+                            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                     )
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -262,6 +262,10 @@ struct SubscriptionBenefit: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 0.5)
+                )
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }

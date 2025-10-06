@@ -85,7 +85,7 @@ struct DailySnoozeRow: View {
             HStack(spacing: 8) {
                 ForEach(0..<max(5, data.snoozeCount + 1), id: \.self) { index in
                     Circle()
-                        .fill(index < data.snoozeCount ? Color.orange : Color.gray.opacity(0.3))
+                        .fill(index < data.snoozeCount ? Color.orange : Color(.systemGray5))
                         .frame(width: 8, height: 8)
                 }
             }
@@ -161,7 +161,7 @@ struct WeeklySnoozeBar: View {
             
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.2))
+                    .fill(Color(.systemGray5))
                     .frame(height: 20)
                 
                 RoundedRectangle(cornerRadius: 4)
@@ -259,7 +259,7 @@ struct SnoozeTrackerView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
         .onChange(of: sleepTracker.sleepData) { oldValue, newValue in
             refreshTrigger = UUID()

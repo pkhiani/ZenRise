@@ -122,6 +122,10 @@ struct BenefitRow: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 0.5)
+                )
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }

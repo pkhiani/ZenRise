@@ -11,7 +11,7 @@ import UserNotifications
 @main
 struct ZenRiseApp: App {
     @StateObject private var settingsManager = UserSettingsManager()
-    @StateObject private var notificationManager = NotificationManager()
+    @StateObject private var alarmManager = UnifiedAlarmManager()
     @StateObject private var sleepTracker = SleepBehaviorTracker()
     @StateObject private var quizManager = SleepReadinessQuizManager()
     
@@ -19,7 +19,7 @@ struct ZenRiseApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(settingsManager)
-                .environmentObject(notificationManager)
+                .environmentObject(alarmManager)
                 .environmentObject(sleepTracker)
                 .environmentObject(quizManager)
                 .onAppear {
@@ -30,11 +30,10 @@ struct ZenRiseApp: App {
     
     private func setupApp() {
         // Inject dependencies
-        notificationManager.settingsManager = settingsManager
-        notificationManager.sleepTracker = sleepTracker
+        alarmManager.setupDependencies(settingsManager: settingsManager, sleepTracker: sleepTracker)
         
-        // Setup notification categories
-        notificationManager.setupNotificationCategories()
-        notificationManager.setupQuizReminderCategories()
+        // Setup notification categories (for quiz reminders and fallback)
+        alarmManager.notificationManager.setupNotificationCategories()
+        alarmManager.notificationManager.setupQuizReminderCategories()
     }
 }

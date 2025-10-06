@@ -11,7 +11,7 @@ struct OnboardingSetupView: View {
     @Binding var currentStep: OnboardingStep
     @Binding var hasCompletedOnboarding: Bool
     @EnvironmentObject var settingsManager: UserSettingsManager
-    @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var alarmManager: UnifiedAlarmManager
     @State private var currentSetupStep: SetupStep = .currentTime
     @State private var currentWakeTime = Calendar.current.date(from: DateComponents(hour: 8, minute: 0)) ?? Date()
     @State private var targetWakeTime = Calendar.current.date(from: DateComponents(hour: 6, minute: 0)) ?? Date()
@@ -143,7 +143,7 @@ struct OnboardingSetupView: View {
         
         // Schedule the alarm
         print("🔔 Scheduling alarm for: \(nextWakeUp)")
-        await notificationManager.scheduleAlarm(
+        await alarmManager.scheduleAlarm(
             for: nextWakeUp,
             sound: selectedSound
         )
@@ -292,7 +292,7 @@ struct TargetTimeSetupStep: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
                 
@@ -374,7 +374,7 @@ struct SoundSetupStep: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
                 
@@ -435,15 +435,15 @@ struct OnboardingSoundOptionCard: View {
                 Spacer()
             }
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .overlay(
+                    .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(isSelected ? Color.green : Color.clear, lineWidth: 2)
+                            .fill(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(isSelected ? Color.green : Color(.systemGray4), lineWidth: 2)
+                            )
+                            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                     )
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -523,7 +523,7 @@ struct ConfirmationSetupStep: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
                 
@@ -590,6 +590,10 @@ struct SetupSummaryRow: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 0.5)
+                )
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }

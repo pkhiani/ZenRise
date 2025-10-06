@@ -89,7 +89,7 @@ struct OnboardingScienceView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
                 

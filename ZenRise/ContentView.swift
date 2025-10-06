@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
-    @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var alarmManager: UnifiedAlarmManager
     @EnvironmentObject var quizManager: SleepReadinessQuizManager
     @State private var selectedTab = 0
     @State private var hasRequestedInitialPermissions = false
@@ -68,7 +68,7 @@ struct ContentView: View {
         hasRequestedInitialPermissions = true
         
         Task {
-            let granted = await notificationManager.requestPermission()
+            let granted = await alarmManager.requestPermission()
             await MainActor.run {
                 if !granted {
                     // If permissions were denied, we'll show a helpful message
@@ -83,14 +83,14 @@ struct ContentView: View {
         if isEnabled {
             settingsManager.settings.startDate = Date()
             Task {
-                let granted = await notificationManager.requestPermission()
+                let granted = await alarmManager.requestPermission()
                 if granted {
-                    await notificationManager.scheduleAlarm(
+                    await alarmManager.scheduleAlarm(
                         for: wakeUpSchedule.timeUntilTarget.nextWakeUp,
                         sound: settingsManager.settings.themeSettings.selectedSound
                     )
                     // Schedule pre-sleep quiz reminder
-                    await notificationManager.schedulePreSleepQuizReminder(
+                    await alarmManager.schedulePreSleepQuizReminder(
                         for: wakeUpSchedule.timeUntilTarget.nextWakeUp
                     )
                 } else {
@@ -101,7 +101,7 @@ struct ContentView: View {
             }
         } else {
             Task {
-                await notificationManager.cancelAllAlarms()
+                await alarmManager.cancelAllAlarms()
             }
         }
     }
@@ -110,5 +110,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(UserSettingsManager())
-        .environmentObject(NotificationManager())
+        .environmentObject(UnifiedAlarmManager())
+        .environmentObject(SleepBehaviorTracker())
+        .environmentObject(SleepReadinessQuizManager())
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
-    @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var alarmManager: UnifiedAlarmManager
     @EnvironmentObject var sleepTracker: SleepBehaviorTracker
     @EnvironmentObject var quizManager: SleepReadinessQuizManager
     @StateObject private var soundManager = SoundManager()
@@ -305,7 +305,7 @@ struct SettingsView: View {
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                                 
-                                Text("Schedule alarm for 10 seconds from now")
+                                Text("Schedule countdown alarm for 10 seconds from now")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -314,7 +314,7 @@ struct SettingsView: View {
                             
                             Button("Test") {
                                 Task {
-                                    await notificationManager.scheduleTestAlarm(sound: selectedSound)
+                                    await alarmManager.scheduleImmediateTestAlarm()
                                 }
                             }
                             .foregroundColor(.white)
@@ -361,7 +361,7 @@ struct SettingsView: View {
                             
                             Button("Test") {
                                 Task {
-                                    await notificationManager.scheduleTestQuizNotification()
+                                    await alarmManager.scheduleTestQuizNotification()
                                 }
                             }
                             .foregroundColor(.white)
@@ -498,7 +498,7 @@ struct SettingsSectionCard<Content: View>: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+                .shadow(color: Color.primary.opacity(0.1), radius: 12, x: 0, y: 4)
         )
     }
 }
@@ -565,7 +565,7 @@ struct SoundOptionCard: View {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
-                        .fill(isSelected ? Color.green.opacity(0.15) : Color.gray.opacity(0.1))
+                        .fill(isSelected ? Color.green.opacity(0.15) : Color(.systemGray6))
                         .frame(width: 28, height: 28)
                     
                     Image(systemName: soundIcon)
@@ -647,6 +647,8 @@ struct ColorPickerCard: View {
     NavigationStack {
         SettingsView()
             .environmentObject(UserSettingsManager())
-            .environmentObject(NotificationManager())
+            .environmentObject(UnifiedAlarmManager())
+            .environmentObject(SleepBehaviorTracker())
+            .environmentObject(SleepReadinessQuizManager())
     }
 } 

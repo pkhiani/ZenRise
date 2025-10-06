@@ -198,7 +198,7 @@ struct CurrentScoreCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -267,7 +267,7 @@ struct EmptyStateCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -343,7 +343,7 @@ struct AverageScoreCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -392,7 +392,7 @@ struct CommonIssuesCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -458,7 +458,7 @@ struct RecentScoresCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
 }
