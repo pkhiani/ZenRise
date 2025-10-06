@@ -148,15 +148,26 @@ struct OnboardingSubscriptionView: View {
         // Purchase weekly subscription through RevenueCat
         let success = await revenueCatManager.purchaseWeeklySubscription()
         
-        await MainActor.run {
-            isLoading = false
+        if success {
+            // Wait a moment for subscription status to update
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
             
-            if success {
+            // Check subscription status again
+            await revenueCatManager.checkSubscriptionStatus()
+            
+            await MainActor.run {
+                isLoading = false
+                
+                // Always proceed to next screen if purchase was successful
+                // The subscription status will be checked again in the next screen
+                print("✅ Purchase successful, proceeding to next screen")
                 withAnimation(.easeInOut(duration: 0.3)) {
                     currentStep = .setup
                 }
-            } else {
-                // Handle purchase failure
+            }
+        } else {
+            await MainActor.run {
+                isLoading = false
                 print("❌ Subscription purchase failed")
             }
         }

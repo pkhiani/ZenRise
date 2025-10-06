@@ -55,6 +55,25 @@ class RevenueCatManager: NSObject, ObservableObject {
         }
     }
     
+    func checkSubscriptionStatus() async {
+        isLoading = true
+        
+        do {
+            let customerInfo = try await Purchases.shared.customerInfo()
+            await MainActor.run {
+                self.isLoading = false
+                self.isSubscribed = customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+                print("✅ Async subscription status: \(self.isSubscribed)")
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Failed to check subscription: \(error.localizedDescription)"
+                print("❌ Async RevenueCat error: \(error)")
+            }
+        }
+    }
+    
     func fetchOfferings() async {
         isLoading = true
         
@@ -81,18 +100,26 @@ class RevenueCatManager: NSObject, ObservableObject {
             return false
         }
         
+        print("🛒 Starting purchase for package: \(weeklyPackage.storeProduct.productIdentifier)")
         isLoading = true
         
         do {
             let result = try await Purchases.shared.purchase(package: weeklyPackage)
             
+            print("✅ Purchase completed successfully")
+            print("📊 Customer info entitlements: \(result.customerInfo.entitlements)")
+            
+            let isActive = result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+            print("🎯 Premium entitlement active: \(isActive)")
+            
             await MainActor.run {
                 self.isLoading = false
-                self.isSubscribed = result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+                self.isSubscribed = isActive
             }
             
-            return result.customerInfo.entitlements[AppConfig.RevenueCat.premiumEntitlement]?.isActive == true
+            return isActive
         } catch {
+            print("❌ Purchase failed: \(error)")
             await MainActor.run {
                 self.isLoading = false
                 self.errorMessage = "Purchase failed: \(error.localizedDescription)"
