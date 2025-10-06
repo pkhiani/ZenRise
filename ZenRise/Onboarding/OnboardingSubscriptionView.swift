@@ -12,6 +12,8 @@ struct OnboardingSubscriptionView: View {
     @StateObject private var revenueCatManager = RevenueCatManager.shared
     @State private var selectedPlan: SubscriptionPlan = .weekly
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     private let plans = [
         SubscriptionPlan.weekly
@@ -123,6 +125,7 @@ struct OnboardingSubscriptionView: View {
                                 .stroke(Color(.systemGray4), lineWidth: 1)
                         )
                 }
+                
             }
             .padding(.horizontal, 32)
             .padding(.bottom, 50)
@@ -140,35 +143,51 @@ struct OnboardingSubscriptionView: View {
         .task {
             await revenueCatManager.fetchOfferings()
         }
+        .alert("Purchase Error", isPresented: $showError) {
+            Button("OK") {
+                showError = false
+            }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
     private func handleSubscription() async {
+        print("🚀 Starting subscription process...")
         isLoading = true
         
         // Purchase weekly subscription through RevenueCat
         let success = await revenueCatManager.purchaseWeeklySubscription()
+        print("📊 Purchase result: \(success)")
         
-        if success {
-            // Wait a moment for subscription status to update
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // Wait a moment for subscription status to update
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        
+        // Check subscription status again
+        await revenueCatManager.checkSubscriptionStatus()
+        print("📊 Final subscription status: \(revenueCatManager.isSubscribed)")
+        
+        await MainActor.run {
+            isLoading = false
             
-            // Check subscription status again
-            await revenueCatManager.checkSubscriptionStatus()
-            
-            await MainActor.run {
-                isLoading = false
+            if success {
+                // Only proceed if purchase was actually successful
+                print("✅ Purchase successful, proceeding to next screen...")
+                print("🔍 Current step before change: \(currentStep)")
+                print("🔍 Setting step to: .setup")
                 
-                // Always proceed to next screen if purchase was successful
-                // The subscription status will be checked again in the next screen
-                print("✅ Purchase successful, proceeding to next screen")
                 withAnimation(.easeInOut(duration: 0.3)) {
                     currentStep = .setup
                 }
-            }
-        } else {
-            await MainActor.run {
-                isLoading = false
-                print("❌ Subscription purchase failed")
+                
+                print("🔍 Current step after change: \(currentStep)")
+            } else {
+                // Purchase failed - show error or allow retry
+                print("❌ Purchase failed - staying on subscription screen")
+                print("💡 User needs to fix sandbox account authentication")
+                
+                showError = true
+                errorMessage = "Purchase failed. Please check your sandbox account settings and try again."
             }
         }
     }
