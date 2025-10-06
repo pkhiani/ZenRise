@@ -32,14 +32,14 @@ struct OnboardingSetupView: View {
                     // Progress Indicator
                     VStack(spacing: 12) {
                         HStack(spacing: 8) {
-                            ForEach(SetupStep.allCases, id: \.self) { step in
+                            ForEach(SetupStep.allCases.filter { $0 != .sound }, id: \.self) { step in
                                 Circle()
                                     .fill(currentSetupStep.rawValue >= step.rawValue ? Color.green : Color.gray.opacity(0.3))
                                     .frame(width: 8, height: 8)
                             }
                         }
                         
-                        Text("Setup Progress: \(currentSetupStep.rawValue + 1) of \(SetupStep.allCases.count)")
+                        Text("Setup Progress: \(currentSetupStep.rawValue + 1) of \(SetupStep.allCases.filter { $0 != .sound }.count)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -70,11 +70,13 @@ struct OnboardingSetupView: View {
                                 },
                                 onNext: {
                                     withAnimation(.easeInOut(duration: 0.3)) {
-                                        currentSetupStep = .sound
+                                        currentSetupStep = .confirmation
                                     }
                                 }
                             )
                         case .sound:
+                            // Sound selection step - COMMENTED OUT
+                            /*
                             SoundSetupStep(
                                 selectedSound: $selectedSound,
                                 onBack: {
@@ -86,6 +88,23 @@ struct OnboardingSetupView: View {
                                     withAnimation(.easeInOut(duration: 0.3)) {
                                         currentSetupStep = .confirmation
                                     }
+                                }
+                            )
+                            */
+                            // Skip to confirmation step
+                            ConfirmationSetupStep(
+                                currentWakeTime: currentWakeTime,
+                                targetWakeTime: targetWakeTime,
+                                selectedSound: selectedSound,
+                                wakeUpSchedule: wakeUpSchedule,
+                                isLoading: $isLoading,
+                                onBack: {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        currentSetupStep = .targetTime
+                                    }
+                                },
+                                onComplete: {
+                                    await completeSetup()
                                 }
                             )
                         case .confirmation:
@@ -136,17 +155,13 @@ struct OnboardingSetupView: View {
         settingsManager.settings.themeSettings.selectedSound = selectedSound
         settingsManager.settings.startDate = Date()
         settingsManager.settings.isSubscribed = true // User completed subscription flow
-        settingsManager.settings.isAlarmEnabled = true // Enable alarm after onboarding
+        // Alarm remains disabled by default - user must enable it manually
         
         let nextWakeUp = wakeUpSchedule.timeUntilTarget.nextWakeUp
         print("🔔 Calculated next wake up time: \(nextWakeUp)")
         
-        // Schedule the alarm
-        print("🔔 Scheduling alarm for: \(nextWakeUp)")
-        await alarmManager.scheduleAlarm(
-            for: nextWakeUp,
-            sound: selectedSound
-        )
+        // Alarm scheduling is now handled when user enables it in settings
+        print("🔔 Alarm setup complete - user must enable alarm in settings")
         
         // Simulate loading
         try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds

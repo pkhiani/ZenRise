@@ -111,7 +111,8 @@ struct SettingsView: View {
                         
                         Divider()
                         
-                        // Sound Selection (always visible)
+                        // Sound Selection (always visible) - COMMENTED OUT
+                        /*
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Wake-up Sound")
                                 .font(.subheadline)
@@ -143,6 +144,7 @@ struct SettingsView: View {
                                 }
                             }
                         }
+                        */
                     }
                 }
             
@@ -312,7 +314,7 @@ struct SettingsView: View {
                             
                             Spacer()
                             
-                            Button("Test") {
+                            Button("Test Alarm") {
                                 Task {
                                     await alarmManager.scheduleImmediateTestAlarm()
                                 }
@@ -323,53 +325,6 @@ struct SettingsView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Color.orange)
-                            )
-                        }
-                    }
-                }
-                
-                // Test Quiz Notification Section (Development Only)
-                SettingsSectionCard(
-                    title: "Test Quiz Notification",
-                    icon: "moon.zzz.fill",
-                    color: .green
-                ) {
-                    VStack(spacing: 16) {
-                        HStack {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.green.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                
-                                Image(systemName: "moon.zzz.fill")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.green)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Test Quiz Notification")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
-                                
-                                Text("Send sleep readiness quiz notification now")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Button("Test") {
-                                Task {
-                                    await alarmManager.scheduleTestQuizNotification()
-                                }
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.green)
                             )
                         }
                     }

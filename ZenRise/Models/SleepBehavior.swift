@@ -80,6 +80,17 @@ class SleepBehaviorTracker: ObservableObject {
         updateWeeklySummaries()
     }
     
+    func updateSleepData(_ data: SleepData) {
+        if let index = sleepData.firstIndex(where: { $0.id == data.id }) {
+            sleepData[index] = data
+            saveData()
+            updateWeeklySummaries()
+        } else {
+            // If not found, add it
+            addSleepData(data)
+        }
+    }
+    
     func addSnoozePattern(_ pattern: SnoozePattern) {
         print("📊 SleepBehaviorTracker.addSnoozePattern called with: \(pattern)")
         print("📊 Current patterns before: \(snoozePatterns)")

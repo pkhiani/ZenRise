@@ -31,7 +31,7 @@ struct SleepGraphView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 12) {
             // Header
             HStack {
                 Text("Sleep Progress")
@@ -42,17 +42,17 @@ struct SleepGraphView: View {
                 Spacer()
             }
             
-                // Chart
-                if chartData.isEmpty {
-                    EmptyStateView()
-                } else {
-                    SimpleSleepChart(data: chartData)
-                        .frame(height: 350)
-                        .padding(.bottom, 20)
-                }
+            // Chart
+            if chartData.isEmpty {
+                EmptyStateView()
+            } else {
+                SimpleSleepChart(data: chartData)
+                    .frame(height: 300)
+                    .padding(.bottom, 8)
+            }
             
             // Legend
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 LegendItem(color: .mint, label: "Target Time", isDashed: true)
                 LegendItem(color: .green, label: "On Time", isDashed: false)
                 LegendItem(color: .orange, label: "Late", isDashed: false)
@@ -60,7 +60,7 @@ struct SleepGraphView: View {
             .font(.caption)
             .foregroundColor(.secondary)
         }
-        .padding()
+        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
@@ -109,21 +109,42 @@ struct SimpleSleepChart: View {
     
     private var minHour: Double {
         guard !data.isEmpty else { return 6.0 }
-        let allTimes = data.flatMap { [$0.actualWakeTime, $0.targetWakeTime] }
+        let allTimes = data.flatMap { [normalizeTime($0.actualWakeTime), normalizeTime($0.targetWakeTime)] }
         let minTime = allTimes.min() ?? Date()
-        return timeToHour(minTime)
+        let calculatedMin = timeToHour(minTime)
+        // Ensure minimum is at least 5:30 AM and maximum 9:00 AM for reasonable wake-up range
+        return max(calculatedMin - 0.5, 4.0) // 5:30 AM
     }
     
     private var maxHour: Double {
         guard !data.isEmpty else { return 8.0 }
-        let allTimes = data.flatMap { [$0.actualWakeTime, $0.targetWakeTime] }
+        let allTimes = data.flatMap { [normalizeTime($0.actualWakeTime), normalizeTime($0.targetWakeTime)] }
         let maxTime = allTimes.max() ?? Date()
-        return timeToHour(maxTime)
+        let calculatedMax = timeToHour(maxTime)
+        // Ensure maximum is at most 9:00 AM for reasonable wake-up range
+        return min(calculatedMax + 0.5, 11.0) // 9:00 AM
+    }
+    
+    // Normalize time to today's date for consistent Y-axis positioning
+    private func normalizeTime(_ time: Date) -> Date {
+        let calendar = Calendar.current
+        let today = Date()
+        let todayComponents = calendar.dateComponents([.year, .month, .day], from: today)
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
+        
+        var normalizedComponents = DateComponents()
+        normalizedComponents.year = todayComponents.year
+        normalizedComponents.month = todayComponents.month
+        normalizedComponents.day = todayComponents.day
+        normalizedComponents.hour = timeComponents.hour
+        normalizedComponents.minute = timeComponents.minute
+        
+        return calendar.date(from: normalizedComponents) ?? time
     }
     
     private var hourRange: Double { 
-        let range = maxHour - minHour
-        return max(range, 1.0) // Ensure minimum range of 1 hour
+        // Use a fixed range for consistent wake-up time display (4:00 AM to 11:00 AM = 7 hours)
+        return 7.0
     }
     
     private func timeToHour(_ time: Date) -> Double {
@@ -134,9 +155,13 @@ struct SimpleSleepChart: View {
     }
     
     private func yPosition(for time: Date) -> CGFloat {
-        let hour = timeToHour(time)
-        let normalizedHour = (hour - minHour) / hourRange
-        return CGFloat(1.0 - normalizedHour) * 180 + 50 // 50px padding to avoid overlap
+        let normalizedTime = normalizeTime(time)
+        let hour = timeToHour(normalizedTime)
+        // Use fixed range from 4:00 AM (4.0) to 11:00 AM (11.0)
+        let minRange = 4.0
+        let maxRange = 11.0
+        let normalizedHour = (hour - minRange) / (maxRange - minRange)
+        return CGFloat(1.0 - normalizedHour) * 180 + 40 // Reduced padding
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -146,18 +171,18 @@ struct SimpleSleepChart: View {
     }
     
     private func generateGridHours() -> [Double] {
-        guard !data.isEmpty else { return [6.0, 7.0, 8.0] }
+        guard !data.isEmpty else { return [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0] }
         
-        // Add some padding to the range
-        let paddedMin = floor(minHour) - 0.5
-        let paddedMax = ceil(maxHour) + 0.5
+        // Create a reasonable range for wake-up times (4:00 AM to 11:00 AM)
+        let minRange = 4.0  // 4:00 AM
+        let maxRange = 11.0  // 11:00 AM
         
         var hours: [Double] = []
-        var currentHour = paddedMin
+        var currentHour = minRange
         
-        while currentHour <= paddedMax {
+        while currentHour <= maxRange {
             hours.append(currentHour)
-            currentHour += 0.5 // 30-minute intervals
+            currentHour += 1.0 // 1-hour intervals for better spacing
         }
         
         return hours
@@ -181,17 +206,17 @@ struct SimpleSleepChart: View {
             VStack(spacing: 0) {
                 let gridHours = generateGridHours()
                 ForEach(gridHours, id: \.self) { hour in
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Text(formatHour(hour))
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                            .frame(width: 45, alignment: .trailing)
+                            .frame(width: 40, alignment: .trailing)
                         
                         Rectangle()
                             .fill(Color(.systemGray6))
                             .frame(height: 1)
                     }
-                    .frame(height: 40)
+                    .frame(height: 30)
                 }
             }
             
@@ -204,7 +229,7 @@ struct SimpleSleepChart: View {
                         
                         let firstX = geometry.size.width * 0.15
                         let lastX = geometry.size.width * 0.85
-                        let targetY = yPosition(for: data.first!.targetWakeTime)
+                        let targetY = yPosition(for: normalizeTime(data.first!.targetWakeTime))
                         
                         path.move(to: CGPoint(x: firstX, y: targetY))
                         path.addLine(to: CGPoint(x: lastX, y: targetY))
@@ -215,13 +240,13 @@ struct SimpleSleepChart: View {
                     ForEach(data.indices, id: \.self) { index in
                         let point = data[index]
                         let x = geometry.size.width * 0.15 + (geometry.size.width * 0.7) * CGFloat(index) / CGFloat(max(data.count - 1, 1))
-                        let y = yPosition(for: point.actualWakeTime)
+                        let y = yPosition(for: normalizeTime(point.actualWakeTime))
                         
                         // Draw connecting line to previous point
                         if index > 0 {
                             let prevPoint = data[index - 1]
                             let prevX = geometry.size.width * 0.15 + (geometry.size.width * 0.7) * CGFloat(index - 1) / CGFloat(max(data.count - 1, 1))
-                            let prevY = yPosition(for: prevPoint.actualWakeTime)
+                            let prevY = yPosition(for: normalizeTime(prevPoint.actualWakeTime))
                             
                             Path { path in
                                 path.move(to: CGPoint(x: prevX, y: prevY))
@@ -244,7 +269,7 @@ struct SimpleSleepChart: View {
                         Text(formatDate(point.date))
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                            .position(x: x, y: geometry.size.height - 40)
+                            .position(x: x, y: geometry.size.height - 20)
                     }
                 }
             }

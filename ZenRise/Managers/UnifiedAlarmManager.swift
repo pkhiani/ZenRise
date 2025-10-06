@@ -186,4 +186,64 @@ class UnifiedAlarmManager: ObservableObject {
             print("🔍 AlarmKit requires iOS 26.0 or later")
         }
     }
+    
+    func simulateOneDay() async {
+        if #available(iOS 26.0, *) {
+            await alarmKitManager.simulateOneDay()
+        } else {
+            print("🔍 AlarmKit requires iOS 26.0 or later")
+        }
+    }
+    
+    // MARK: - Snooze Tracking
+    
+    func recordSnoozeEvent() {
+        if #available(iOS 26.0, *) {
+            alarmKitManager.recordSnoozeEvent()
+        }
+        // Note: NotificationManager doesn't have snooze tracking for alarms
+    }
+    
+    func getCurrentSnoozeCount() -> Int {
+        if #available(iOS 26.0, *) {
+            return alarmKitManager.currentSnoozeCount
+        }
+        return 0
+    }
+    
+    func handleSnoozeButtonPressed() {
+        if #available(iOS 26.0, *) {
+            alarmKitManager.handleSnoozeButtonPressed()
+        }
+    }
+    
+    func detectSnoozeButtonPress() {
+        print("🔍 UnifiedAlarmManager.detectSnoozeButtonPress() called")
+        if #available(iOS 26.0, *) {
+            print("🔍 iOS 26.0+ available, calling AlarmKitManager")
+            alarmKitManager.detectSnoozeButtonPress()
+        } else {
+            print("🔍 iOS 26.0+ not available")
+        }
+    }
+    
+    func handleAlarmSnoozeButtonPressed() {
+        print("🔍 UnifiedAlarmManager.handleAlarmSnoozeButtonPressed() called")
+        if #available(iOS 26.0, *) {
+            print("🔍 iOS 26.0+ available, calling AlarmKitManager")
+            alarmKitManager.handleAlarmSnoozeButtonPressed()
+        } else {
+            print("🔍 iOS 26.0+ not available")
+        }
+    }
+    
+    func recordSnooze() {
+        print("🔍 UnifiedAlarmManager.recordSnooze() called")
+        if #available(iOS 26.0, *) {
+            print("🔍 iOS 26.0+ available, calling AlarmKitManager")
+            alarmKitManager.recordSnooze()
+        } else {
+            print("🔍 iOS 26.0+ not available")
+        }
+    }
 }

@@ -26,6 +26,11 @@ class AlarmKitManager: ObservableObject {
     @Published var isAuthorized = false
     @Published var currentSnoozeCount = 0
     @Published var lastAlarmTime: Date?
+    @Published var alarmStartTime: Date?
+    @Published var snoozeEvents: [Date] = [] // Track individual snooze events
+    private var snoozeDetectionTimer: Timer?
+    private var initialAlarmDuration: TimeInterval = 0
+    private var lastAlarmState: Alarm.State?
     
     // Dependencies (will be set by the app)
     weak var settingsManager: UserSettingsManager?
@@ -115,6 +120,9 @@ class AlarmKitManager: ObservableObject {
         // Cancel any existing alarms first
         await cancelAllAlarms()
         
+        // Reset snooze tracking for new alarm
+        resetSnoozeTracking()
+        
         // For test mode, use immediate timer; for real alarms, calculate time until target
         let timeUntilAlarm: TimeInterval
         if isTestMode {
@@ -127,7 +135,12 @@ class AlarmKitManager: ObservableObject {
             }
         }
         
+        // Set alarm start time and initial duration for tracking
+        alarmStartTime = Date()
+        initialAlarmDuration = timeUntilAlarm
+        
         print("🔔 Time until alarm: \(timeUntilAlarm) seconds")
+        print("🔔 Initial alarm duration: \(initialAlarmDuration) seconds")
         
         // Create alarm presentation with snooze button
         let alert = AlarmPresentation.Alert(
@@ -170,6 +183,9 @@ class AlarmKitManager: ObservableObject {
             print("✅ Alarm scheduled successfully: \(timerAlarm.id)")
             print("✅ Alarm will fire in \(timeUntilAlarm) seconds")
             
+            // Start monitoring for snooze events
+            startSnoozeDetection()
+            
         } catch {
             print("❌ Scheduling error: \(error)")
         }
@@ -198,6 +214,198 @@ class AlarmKitManager: ObservableObject {
     // MARK: - Sound Conversion
     // Note: AlarmKit uses system sounds, so we don't need custom sound conversion
     
+    // MARK: - Snooze Tracking
+    
+    func recordSnoozeEvent() {
+        print("⏰ Snooze event recorded!")
+        print("⏰ Previous count: \(currentSnoozeCount)")
+        
+        let snoozeTime = Date()
+        snoozeEvents.append(snoozeTime)
+        currentSnoozeCount += 1
+        
+        print("⏰ New count: \(currentSnoozeCount)")
+        print("⏰ Total snooze events: \(snoozeEvents.count)")
+        
+        // Update sleep tracking with snooze pattern
+        if let sleepTracker = sleepTracker {
+            let today = Calendar.current.startOfDay(for: Date())
+            let snoozePattern = SnoozePattern(
+                date: today,
+                snoozeCount: currentSnoozeCount,
+                totalSnoozeTime: TimeInterval(currentSnoozeCount * 300) // 5 minutes per snooze
+            )
+            
+            print("⏰ Adding snooze pattern to sleep tracker: \(snoozePattern)")
+            sleepTracker.addSnoozePattern(snoozePattern)
+            
+            // Also update or create SleepData for today
+            updateTodaySleepData(snoozeCount: currentSnoozeCount)
+        } else {
+            print("⏰ No sleep tracker available!")
+        }
+        
+        // Post notification for other parts of the app
+        NotificationCenter.default.post(name: .alarmDidSnooze, object: nil)
+        print("⏰ Snooze notification posted")
+    }
+    
+    // Simple snooze detection - call this when snooze button is pressed
+    func handleSnoozeButtonPressed() {
+        print("🔔 Snooze button pressed - incrementing counter")
+        recordSnoozeEvent()
+    }
+    
+    // Start monitoring for snooze events (call this when alarm starts)
+    private func startSnoozeDetection() {
+        print("🔍 Starting snooze detection monitoring...")
+        snoozeDetectionTimer?.invalidate()
+        
+        snoozeDetectionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.checkForSnoozeEvents()
+        }
+    }
+    
+    // Stop monitoring for snooze events
+    private func stopSnoozeDetection() {
+        print("🛑 Stopping snooze detection monitoring...")
+        snoozeDetectionTimer?.invalidate()
+        snoozeDetectionTimer = nil
+    }
+    
+    // Check for snooze events by monitoring alarm state changes
+    private func checkForSnoozeEvents() {
+        // Monitor for snooze events by checking alarm states
+        do {
+            let alarms = try alarmManager.alarms
+            for alarm in alarms {
+                // Check if alarm is in countdown state
+                if alarm.state == .countdown {
+                    // Check if this alarm has been running longer than expected (indicating snooze)
+                    checkForSnoozeByDuration(alarm: alarm)
+                }
+                
+                // Check for state changes that might indicate snooze
+                checkForStateChangeSnooze(alarm: alarm)
+            }
+        } catch {
+            print("❌ Error checking alarm states: \(error)")
+        }
+    }
+    
+    // Check for snooze by monitoring alarm duration
+    private func checkForSnoozeByDuration(alarm: Alarm) {
+        guard let startTime = alarmStartTime else { return }
+        
+        let currentTime = Date()
+        let elapsedTime = currentTime.timeIntervalSince(startTime)
+        
+        // If alarm has been running longer than its initial duration + buffer, it was likely snoozed
+        let expectedDuration = initialAlarmDuration
+        let bufferTime: TimeInterval = 10 // 10 second buffer
+        
+        if elapsedTime > (expectedDuration + bufferTime) {
+            print("🔍 Possible snooze detected - alarm running for \(elapsedTime)s, expected \(expectedDuration)s")
+            
+            // Check if we haven't already recorded this snooze
+            let timeSinceLastSnooze = snoozeEvents.last.map { currentTime.timeIntervalSince($0) } ?? Double.infinity
+            if timeSinceLastSnooze > 30 { // Only record if last snooze was more than 30 seconds ago
+                print("🔔 Auto-detecting snooze based on duration!")
+                recordSnoozeEvent()
+            }
+        }
+    }
+    
+    // Check for snooze by monitoring state changes
+    private func checkForStateChangeSnooze(alarm: Alarm) {
+        let currentState = alarm.state
+        
+        // If alarm went from alerting to countdown, it might have been snoozed
+        if lastAlarmState == .alerting && currentState == .countdown {
+            print("🔍 State change detected: alerting -> countdown (possible snooze)")
+            
+            // Check if we haven't already recorded this snooze recently
+            let timeSinceLastSnooze = snoozeEvents.last.map { Date().timeIntervalSince($0) } ?? Double.infinity
+            if timeSinceLastSnooze > 30 { // Only record if last snooze was more than 30 seconds ago
+                print("🔔 Auto-detecting snooze based on state change!")
+                recordSnoozeEvent()
+            }
+        }
+        
+        // Update last known state
+        lastAlarmState = currentState
+    }
+    
+    // Public method to be called when snooze is detected (by any means)
+    func detectSnoozeButtonPress() {
+        print("🔔 Snooze button detected - incrementing counter")
+        recordSnoozeEvent()
+    }
+    
+    // Method to be called when the actual alarm snooze button is pressed
+    // This should be called from the alarm interface or through other detection means
+    func handleAlarmSnoozeButtonPressed() {
+        print("🔔 Real alarm snooze button pressed!")
+        recordSnoozeEvent()
+    }
+    
+    // Simple method to record snooze - call this when you know snooze was pressed
+    func recordSnooze() {
+        print("🔔 Recording snooze event...")
+        recordSnoozeEvent()
+    }
+    
+    // Update or create SleepData for today with current snooze count
+    private func updateTodaySleepData(snoozeCount: Int) {
+        guard let sleepTracker = sleepTracker else {
+            print("⏰ No sleep tracker available for SleepData update")
+            return
+        }
+        
+        let today = Calendar.current.startOfDay(for: Date())
+        let currentTime = Date()
+        
+        // Check if we already have SleepData for today
+        if let existingIndex = sleepTracker.sleepData.firstIndex(where: { 
+            Calendar.current.isDate($0.date, inSameDayAs: today) 
+        }) {
+            // Update existing SleepData
+            let existingData = sleepTracker.sleepData[existingIndex]
+            let updatedData = SleepData(
+                date: existingData.date,
+                actualWakeTime: existingData.actualWakeTime,
+                targetWakeTime: existingData.targetWakeTime,
+                snoozeCount: snoozeCount,
+                isSuccessful: existingData.isSuccessful,
+                alarmEnabled: existingData.alarmEnabled
+            )
+            sleepTracker.updateSleepData(updatedData)
+            print("⏰ Updated existing SleepData for today with snooze count: \(snoozeCount)")
+        } else {
+            // Create new SleepData for today
+            let targetWakeTime = settingsManager?.settings.targetWakeUpTime ?? currentTime
+            let sleepData = SleepData(
+                date: today,
+                actualWakeTime: currentTime,
+                targetWakeTime: targetWakeTime,
+                snoozeCount: snoozeCount,
+                isSuccessful: currentTime <= targetWakeTime,
+                alarmEnabled: true
+            )
+            sleepTracker.addSleepData(sleepData)
+            print("⏰ Created new SleepData for today with snooze count: \(snoozeCount)")
+        }
+    }
+    
+    func resetSnoozeTracking() {
+        print("🔄 Resetting snooze tracking")
+        currentSnoozeCount = 0
+        snoozeEvents.removeAll()
+        alarmStartTime = nil
+        initialAlarmDuration = 0
+        lastAlarmState = nil
+    }
+    
     // MARK: - Event Handling
     
     private func setupAlarmObservers() {
@@ -218,11 +426,23 @@ class AlarmKitManager: ObservableObject {
         ) { [weak self] notification in
             self?.handleAlarmSnoozed()
         }
+        
+        // Listen for app becoming active (user might have snoozed alarm)
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            self?.checkForSnoozeAfterAppActivation()
+        }
     }
     
     private func handleAlarmFired() {
         print("🔔 AlarmKit alarm fired!")
         logger.info("AlarmKit alarm fired")
+        
+        // Show snooze tracking notification
+        showSnoozeTrackingNotification()
         
         // Update sleep tracking data
         if let sleepTracker = sleepTracker {
@@ -242,8 +462,93 @@ class AlarmKitManager: ObservableObject {
             sleepTracker.addSleepData(sleepData)
         }
         
-        // Reset snooze count
+        // Update current wake time for 15-minute progression
+        updateCurrentWakeTimeForJourney()
+        
+        // Reset snooze count and stop detection
         currentSnoozeCount = 0
+        stopSnoozeDetection()
+    }
+    
+    // Show notification to track snooze
+    private func showSnoozeTrackingNotification() {
+        print("🔔 Showing snooze tracking notification")
+        // This would show a notification asking if user snoozed
+        // For now, we'll just log it
+    }
+    
+    // Update current wake time for 15-minute progression
+    private func updateCurrentWakeTimeForJourney() {
+        guard let settingsManager = settingsManager else {
+            print("❌ No settings manager available for wake time update")
+            return
+        }
+        
+        let calendar = Calendar.current
+        let currentWakeTime = settingsManager.settings.currentWakeUpTime
+        let targetWakeTime = settingsManager.settings.targetWakeUpTime
+        
+        // Check if we've reached the target
+        let currentComponents = calendar.dateComponents([.hour, .minute], from: currentWakeTime)
+        let targetComponents = calendar.dateComponents([.hour, .minute], from: targetWakeTime)
+        
+        let currentMinutes = currentComponents.hour! * 60 + currentComponents.minute!
+        let targetMinutes = targetComponents.hour! * 60 + targetComponents.minute!
+        
+        // If we've reached the target, don't update
+        if currentMinutes == targetMinutes {
+            print("🎯 Target wake time reached - no more progression needed")
+            return
+        }
+        
+        // Calculate next wake time (15 minutes earlier)
+        let nextWakeMinutes = (currentMinutes - 15 + 24 * 60) % (24 * 60)
+        let nextWakeHour = nextWakeMinutes / 60
+        let nextWakeMinute = nextWakeMinutes % 60
+        
+        // Create new wake time for tomorrow
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let tomorrowComponents = calendar.dateComponents([.year, .month, .day], from: tomorrow)
+        
+        var nextWakeComponents = DateComponents()
+        nextWakeComponents.year = tomorrowComponents.year
+        nextWakeComponents.month = tomorrowComponents.month
+        nextWakeComponents.day = tomorrowComponents.day
+        nextWakeComponents.hour = nextWakeHour
+        nextWakeComponents.minute = nextWakeMinute
+        
+        let nextWakeTime = calendar.date(from: nextWakeComponents) ?? currentWakeTime
+        
+        // Update the current wake time
+        settingsManager.settings.currentWakeUpTime = nextWakeTime
+        
+        print("⏰ Updated current wake time from \(currentWakeTime.formatted(date: .omitted, time: .shortened)) to \(nextWakeTime.formatted(date: .omitted, time: .shortened))")
+        
+        // Schedule the next alarm
+        scheduleNextAlarm()
+    }
+    
+    // Schedule the next alarm based on updated wake time
+    private func scheduleNextAlarm() {
+        guard let settingsManager = settingsManager else {
+            print("❌ No settings manager available for next alarm scheduling")
+            return
+        }
+        
+        let wakeUpSchedule = WakeUpSchedule(
+            currentWakeUpTime: settingsManager.settings.currentWakeUpTime,
+            targetWakeUpTime: settingsManager.settings.targetWakeUpTime
+        )
+        
+        let nextWakeUp = wakeUpSchedule.timeUntilTarget.nextWakeUp
+        
+        Task {
+            print("🔔 Scheduling next alarm for: \(nextWakeUp.formatted(date: .omitted, time: .shortened))")
+            await scheduleAlarm(
+                for: nextWakeUp,
+                sound: settingsManager.settings.themeSettings.selectedSound
+            )
+        }
     }
     
     private func handleAlarmSnoozed() {
@@ -266,12 +571,46 @@ class AlarmKitManager: ObservableObject {
         }
     }
     
+    // Check if user snoozed alarm when app becomes active
+    private func checkForSnoozeAfterAppActivation() {
+        // This is a heuristic approach to detect snooze
+        // When the app becomes active and there's an active alarm, 
+        // it might indicate the user snoozed the alarm
+        
+        guard let startTime = alarmStartTime else { return }
+        
+        let timeSinceStart = Date().timeIntervalSince(startTime)
+        print("🔍 App became active, alarm started \(timeSinceStart) seconds ago")
+        
+        // If alarm has been active for more than 10 seconds and user is back in app,
+        // it might indicate a snooze action
+        if timeSinceStart > 10 && timeSinceStart < 300 { // Between 10 seconds and 5 minutes
+            print("🔍 Possible snooze detected - alarm was active for \(timeSinceStart) seconds")
+            // Don't auto-detect to avoid false positives
+            // This is where you would implement actual snooze detection
+        }
+    }
+    
     // MARK: - Test Functions
     
     func scheduleTestAlarm(sound: ClockThemeSettings.AlarmSound) async {
         print("🧪 Scheduling test AlarmKit alarm...")
         let testTime = Date().addingTimeInterval(10) // 10 seconds from now
         await scheduleAlarm(for: testTime, sound: sound, isTestMode: true)
+    }
+    
+    // Simulate one day of the wake-up journey
+    func simulateOneDay() async {
+        print("🧪 Simulating one day of wake-up journey...")
+        
+        // Simulate the alarm firing
+        print("🔔 Simulating alarm fired...")
+        handleAlarmFired()
+        
+        // Wait a moment for the progression to complete
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        print("✅ Day simulation complete!")
     }
     
     func scheduleFixedTimeTestAlarm() async {
@@ -353,7 +692,7 @@ class AlarmKitManager: ObservableObject {
         print("🔔 scheduleTimer() called - creating alert...")
         
         let alert = AlarmPresentation.Alert(
-            title: LocalizedStringResource(stringLiteral: "Time to wake up!"),
+            title: LocalizedStringResource(stringLiteral: "Wake up!"),
             stopButton: AlarmButton(
                 text: LocalizedStringResource(stringLiteral: "Done"),
                 textColor: .green,
