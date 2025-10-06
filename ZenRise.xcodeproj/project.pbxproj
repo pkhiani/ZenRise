@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4EE7F6952E9462C2003D26A2 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 4EE7F6942E9462C2003D26A2 /* RevenueCat */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4E23E8882D20C9DB00F34526 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4EE7F6952E9462C2003D26A2 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +130,7 @@
 			);
 			name = ZenRise;
 			packageProductDependencies = (
+				4EE7F6942E9462C2003D26A2 /* RevenueCat */,
 			);
 			productName = ZenRise;
 			productReference = 4E23E8772D20C9DA00F34526 /* ZenRise.app */;
@@ -208,6 +214,9 @@
 			);
 			mainGroup = 4E23E86E2D20C9D900F34526;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4EE7F6932E9462C2003D26A2 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4E23E8782D20C9DA00F34526 /* Products */;
 			projectDirPath = "";
@@ -575,6 +584,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4EE7F6932E9462C2003D26A2 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.41.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4EE7F6942E9462C2003D26A2 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4EE7F6932E9462C2003D26A2 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4E23E86F2D20C9DA00F34526 /* Project object */;
 }

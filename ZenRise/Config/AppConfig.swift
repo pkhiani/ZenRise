@@ -26,4 +26,10 @@ struct AppConfig {
         static let shadowRadius: CGFloat = 2
         static let animationDuration: Double = 0.3
     }
+    
+    struct RevenueCat {
+        static let apiKey = "appl_yUCWFsogwJtYxkgqvKZrauozjRx" // Replace with your actual API key
+        static let premiumEntitlement = "premium"
+        static let freeTrialDays = 3
+    }
 }

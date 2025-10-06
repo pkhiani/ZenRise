@@ -14,6 +14,7 @@ struct ZenRiseApp: App {
     @StateObject private var alarmManager = UnifiedAlarmManager()
     @StateObject private var sleepTracker = SleepBehaviorTracker()
     @StateObject private var quizManager = SleepReadinessQuizManager()
+    @StateObject private var revenueCatManager = RevenueCatManager.shared
     
     var body: some Scene {
         WindowGroup {
@@ -22,6 +23,7 @@ struct ZenRiseApp: App {
                 .environmentObject(alarmManager)
                 .environmentObject(sleepTracker)
                 .environmentObject(quizManager)
+                .environmentObject(revenueCatManager)
                 .onAppear {
                     setupApp()
                 }

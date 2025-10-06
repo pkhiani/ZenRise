@@ -5,9 +5,11 @@ struct SettingsView: View {
     @EnvironmentObject var alarmManager: UnifiedAlarmManager
     @EnvironmentObject var sleepTracker: SleepBehaviorTracker
     @EnvironmentObject var quizManager: SleepReadinessQuizManager
+    @EnvironmentObject var revenueCatManager: RevenueCatManager
     @StateObject private var soundManager = SoundManager()
     @State private var showingResetAlert = false
     @State private var selectedSound: ClockThemeSettings.AlarmSound = .default
+    @State private var showingSubscriptionManagement = false
     
     // Initialize selectedSound from settings
     private func updateSelectedSound() {
@@ -145,6 +147,51 @@ struct SettingsView: View {
                             }
                         }
                         */
+                    }
+                }
+                
+                // Subscription Section
+                SettingsSectionCard(
+                    title: "Subscription",
+                    icon: "crown.fill",
+                    color: .purple
+                ) {
+                    VStack(spacing: 16) {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.purple.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.purple)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(revenueCatManager.isSubscribed ? "Premium Active" : "Free Plan")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                
+                                Text(revenueCatManager.isSubscribed ? "Weekly subscription active" : "Upgrade to unlock premium features")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button("Manage") {
+                                showingSubscriptionManagement = true
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.purple)
+                            )
+                        }
                     }
                 }
             
@@ -398,6 +445,20 @@ struct SettingsView: View {
         }
         .onDisappear {
             soundManager.stopSound()
+        }
+        .sheet(isPresented: $showingSubscriptionManagement) {
+            NavigationStack {
+                SubscriptionManagementView()
+                    .navigationTitle("Subscription")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingSubscriptionManagement = false
+                            }
+                        }
+                    }
+            }
         }
         .alert("Reset Sleep Data", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) { }

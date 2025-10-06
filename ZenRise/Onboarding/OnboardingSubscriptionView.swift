@@ -9,11 +9,12 @@ import SwiftUI
 
 struct OnboardingSubscriptionView: View {
     @Binding var currentStep: OnboardingStep
-    @State private var selectedPlan: SubscriptionPlan = .monthly
+    @StateObject private var revenueCatManager = RevenueCatManager.shared
+    @State private var selectedPlan: SubscriptionPlan = .weekly
     @State private var isLoading = false
     
     private let plans = [
-        SubscriptionPlan.monthly
+        SubscriptionPlan.weekly
     ]
     
     var body: some View {
@@ -25,7 +26,7 @@ struct OnboardingSubscriptionView: View {
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)
                 
-                Text("Try ZenRise free for 2 days")
+                Text("Try ZenRise free for \(AppConfig.RevenueCat.freeTrialDays) days")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -62,7 +63,7 @@ struct OnboardingSubscriptionView: View {
             
             // Free Trial Notice
             VStack(spacing: 8) {
-                Text("2-day free trial, then \(selectedPlan.price)")
+                Text("\(AppConfig.RevenueCat.freeTrialDays)-day free trial, then \(revenueCatManager.getWeeklyPrice() ?? selectedPlan.price)")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
@@ -136,18 +137,27 @@ struct OnboardingSubscriptionView: View {
                 endPoint: .bottom
             )
         )
+        .task {
+            await revenueCatManager.fetchOfferings()
+        }
     }
     
     private func handleSubscription() async {
         isLoading = true
         
-        // Simulate subscription process
-        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        // Purchase weekly subscription through RevenueCat
+        let success = await revenueCatManager.purchaseWeeklySubscription()
         
         await MainActor.run {
             isLoading = false
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep = .setup
+            
+            if success {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentStep = .setup
+                }
+            } else {
+                // Handle purchase failure
+                print("❌ Subscription purchase failed")
             }
         }
     }
@@ -160,7 +170,7 @@ struct SubscriptionPlan {
     let period: String
     let savings: String?
     
-    static let monthly = SubscriptionPlan(
+    static let weekly = SubscriptionPlan(
         id: "weekly",
         title: "Weekly",
         price: "$1.99/week",
