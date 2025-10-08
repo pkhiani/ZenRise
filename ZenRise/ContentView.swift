@@ -15,7 +15,6 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var hasRequestedInitialPermissions = false
     @State private var showQuizFromNotification = false
-    @State private var isCheckingSubscription = true
     
     private var wakeUpSchedule: WakeUpSchedule {
         WakeUpSchedule(
@@ -26,21 +25,7 @@ struct ContentView: View {
     
     var body: some View {
         Group {
-            if isCheckingSubscription {
-                // Show loading while checking subscription status
-                VStack {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Checking subscription...")
-                        .font(.headline)
-                        .padding(.top)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground))
-                .task {
-                    await checkSubscriptionAndRedirect()
-                }
-            } else if settingsManager.settings.hasCompletedOnboarding {
+            if settingsManager.settings.hasCompletedOnboarding {
                 TabView(selection: $selectedTab) {
                     HomeView(wakeUpSchedule: wakeUpSchedule)
                         .tabItem {
@@ -68,6 +53,10 @@ struct ContentView: View {
                 .onAppear {
                     requestInitialPermissionsIfNeeded()
                 }
+                .task {
+                    // Check subscription silently in background
+                    await checkSubscriptionAndRedirect()
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .openSleepReadinessQuiz)) { _ in
                     selectedTab = 1 // Switch to Progress tab
                     showQuizFromNotification = true
@@ -79,25 +68,48 @@ struct ContentView: View {
     }
     
     private func checkSubscriptionAndRedirect() async {
+        print("🔍 Starting subscription check...")
+        
         // Check if user has completed onboarding
         guard settingsManager.settings.hasCompletedOnboarding else {
-            await MainActor.run {
-                isCheckingSubscription = false
-            }
+            print("ℹ️ User hasn't completed onboarding - skipping subscription check")
             return
         }
         
-        // Check subscription status
-        let hasActiveSubscription = await revenueCatManager.checkAndRedirectIfExpired()
+        // Add timeout to prevent getting stuck
+        let hasActiveSubscription = await withTimeout(seconds: 5) {
+            await revenueCatManager.checkAndRedirectIfExpired()
+        }
         
         await MainActor.run {
-            if !hasActiveSubscription {
+            if let hasSubscription = hasActiveSubscription, !hasSubscription {
                 // Subscription expired - reset onboarding and redirect to subscription
                 print("🔄 Subscription expired - redirecting to onboarding")
                 settingsManager.settings.hasCompletedOnboarding = false
                 settingsManager.settings.isSubscribed = false
+            } else if hasActiveSubscription == nil {
+                // Timeout occurred - proceed anyway to avoid blocking user
+                print("⚠️ Subscription check timed out - proceeding anyway")
+            } else {
+                print("✅ Subscription is active - user can continue")
             }
-            isCheckingSubscription = false
+        }
+    }
+    
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async -> T) async -> T? {
+        return await withTaskGroup(of: T?.self) { group in
+            group.addTask {
+                return await operation()
+            }
+            
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                return nil
+            }
+            
+            let result = await group.next()
+            group.cancelAll()
+            return result ?? nil
         }
     }
     

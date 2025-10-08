@@ -73,6 +73,19 @@ struct OnboardingSubscriptionView: View {
                 Text("Cancel anytime. No commitment required.")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                
+                // Restore purchases button
+                Button(action: {
+                    Task {
+                        await handleRestore()
+                    }
+                }) {
+                    Text("Restore Purchases")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .underline()
+                }
+                .padding(.top, 8)
             }
             .padding(.horizontal, 32)
             .padding(.bottom, 20)
@@ -171,7 +184,7 @@ struct OnboardingSubscriptionView: View {
                 // Force subscription status to true since purchase was successful
                 revenueCatManager.isSubscribed = true
                 print("🔧 Forcing subscription status to true after successful purchase")
-
+ 
                         // Check subscription status again
                 revenueCatManager.checkSubscriptionStatus()
                 print("📊 Final subscription status: \(revenueCatManager.isSubscribed)")
@@ -193,6 +206,28 @@ struct OnboardingSubscriptionView: View {
                 
                 showError = true
                 errorMessage = "Purchase failed. Please check your sandbox account settings and try again."
+            }
+        }
+    }
+    
+    private func handleRestore() async {
+        print("🔄 Starting restore purchases...")
+        isLoading = true
+        
+        let success = await revenueCatManager.restorePurchases()
+        
+        await MainActor.run {
+            isLoading = false
+            
+            if success {
+                print("✅ Restore successful, proceeding to next screen...")
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentStep = .setup
+                }
+            } else {
+                print("❌ Restore failed - no purchases found")
+                showError = true
+                errorMessage = "No previous purchases found. Please subscribe to continue."
             }
         }
     }
