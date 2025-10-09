@@ -39,7 +39,7 @@ struct OnboardingSetupView: View {
                             }
                         }
                         
-                        Text("Setup Progress: \(currentSetupStep.rawValue + 1) of \(SetupStep.allCases.filter { $0 != .sound }.count)")
+                        Text("Setup Progress: \(min(currentSetupStep.rawValue + 1, 3)) of 3")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -116,7 +116,7 @@ struct OnboardingSetupView: View {
                                 isLoading: $isLoading,
                                 onBack: {
                                     withAnimation(.easeInOut(duration: 0.3)) {
-                                        currentSetupStep = .sound
+                                        currentSetupStep = .targetTime
                                     }
                                 },
                                 onComplete: {

@@ -2,14 +2,46 @@ import SwiftUI
 import AVFoundation
 
 public class ClockThemeSettings: ObservableObject, Codable {
-    @Published public var currentHandColor: Color = .mint
-    @Published public var targetHandColor: Color = .green
-    @Published public var showArcs: Bool = true
-    @Published public var clockStyle: ClockStyle = .modern
-    @Published public var clockSize: ClockSize = .medium
-    @Published public var selectedSound: AlarmSound = .default
+    @Published public var currentHandColor: Color = .mint {
+        didSet {
+            saveSettings()
+        }
+    }
+    @Published public var targetHandColor: Color = .green {
+        didSet {
+            saveSettings()
+        }
+    }
+    @Published public var showArcs: Bool = true {
+        didSet {
+            saveSettings()
+        }
+    }
+    @Published public var clockStyle: ClockStyle = .modern {
+        didSet {
+            saveSettings()
+        }
+    }
+    @Published public var clockSize: ClockSize = .medium {
+        didSet {
+            saveSettings()
+        }
+    }
+    @Published public var selectedSound: AlarmSound = .default {
+        didSet {
+            saveSettings()
+        }
+    }
+    
+    // Weak reference to avoid retain cycles
+    weak var settingsManager: UserSettingsManager?
     
     public init() {}
+    
+    private func saveSettings() {
+        print("🎨 Saving theme settings - Current: \(currentHandColor), Target: \(targetHandColor)")
+        settingsManager?.saveSettingsNow()
+    }
     
     // MARK: - Codable
     enum CodingKeys: String, CodingKey {
@@ -79,49 +111,54 @@ public class ClockThemeSettings: ObservableObject, Codable {
 extension Color: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let colorName = try container.decode(String.self)
         
-        switch colorName {
-        case "blue": self = .blue
-        case "green": self = .green
-        case "red": self = .red
-        case "orange": self = .orange
-        case "yellow": self = .yellow
-        case "purple": self = .purple
-        case "pink": self = .pink
-        case "gray": self = .gray
-        case "black": self = .black
-        case "white": self = .white
-        case "cyan": self = .cyan
-        case "mint": self = .mint
-        case "indigo": self = .indigo
-        case "teal": self = .teal
-        case "brown": self = .brown
-        default: self = .blue // Default fallback
+        // Try to decode as RGB values first
+        if let rgbData = try? container.decode([String: Double].self) {
+            let red = rgbData["red"] ?? 0.0
+            let green = rgbData["green"] ?? 0.0
+            let blue = rgbData["blue"] ?? 0.0
+            let alpha = rgbData["alpha"] ?? 1.0
+            
+            self = Color(red: red, green: green, blue: blue, opacity: alpha)
+        } else {
+            // Fallback to color name for backward compatibility
+            let colorName = try container.decode(String.self)
+            switch colorName {
+            case "blue": self = .blue
+            case "green": self = .green
+            case "red": self = .red
+            case "orange": self = .orange
+            case "yellow": self = .yellow
+            case "purple": self = .purple
+            case "pink": self = .pink
+            case "gray": self = .gray
+            case "black": self = .black
+            case "white": self = .white
+            case "cyan": self = .cyan
+            case "mint": self = .mint
+            case "indigo": self = .indigo
+            case "teal": self = .teal
+            case "brown": self = .brown
+            default: self = .mint // Default to mint instead of blue
+            }
         }
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
-        let colorName: String
-        if self == .blue { colorName = "blue" }
-        else if self == .green { colorName = "green" }
-        else if self == .red { colorName = "red" }
-        else if self == .orange { colorName = "orange" }
-        else if self == .yellow { colorName = "yellow" }
-        else if self == .purple { colorName = "purple" }
-        else if self == .pink { colorName = "pink" }
-        else if self == .gray { colorName = "gray" }
-        else if self == .black { colorName = "black" }
-        else if self == .white { colorName = "white" }
-        else if self == .cyan { colorName = "cyan" }
-        else if self == .mint { colorName = "mint" }
-        else if self == .indigo { colorName = "indigo" }
-        else if self == .teal { colorName = "teal" }
-        else if self == .brown { colorName = "brown" }
-        else { colorName = "blue" } // Default fallback
+        // Convert to RGB values and store them directly
+        let resolvedColor = UIColor(self)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        resolvedColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         
-        try container.encode(colorName)
+        let rgbData = [
+            "red": Double(red),
+            "green": Double(green),
+            "blue": Double(blue),
+            "alpha": Double(alpha)
+        ]
+        
+        try container.encode(rgbData)
     }
 } 

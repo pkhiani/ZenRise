@@ -16,7 +16,7 @@ struct OnboardingFeaturesView: View {
             icon: "speaker.wave.2.fill",
             title: "Gentle Wake-Up Sounds",
             description: "Start your day with soothing, scientifically-selected alarm tones designed to wake you naturally.",
-            details: ["Nature sounds", "Gentle wake-up tones", "Customizable sounds"]
+            details: ["Nature sounds", "Gentle wake-up tones", "Built-in alarm tones"]
         ),
         Feature(
             icon: "chart.line.uptrend.xyaxis",
