@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var settingsManager: UserSettingsManager
     @EnvironmentObject var alarmManager: UnifiedAlarmManager
+    @State private var refreshTrigger = false
     let wakeUpSchedule: WakeUpSchedule
     
     private var nextWakeUpTimeString: String {
@@ -99,6 +100,9 @@ struct HomeView: View {
                     endPoint: .bottom
                 )
             )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .wakeTimeUpdated)) { _ in
+            refreshTrigger.toggle()
         }
     }
 }

@@ -39,7 +39,6 @@ public class ClockThemeSettings: ObservableObject, Codable {
     public init() {}
     
     private func saveSettings() {
-        print("🎨 Saving theme settings - Current: \(currentHandColor), Target: \(targetHandColor)")
         settingsManager?.saveSettingsNow()
     }
     

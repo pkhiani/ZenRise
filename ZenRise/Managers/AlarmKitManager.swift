@@ -29,8 +29,10 @@ class AlarmKitManager: ObservableObject {
     @Published var alarmStartTime: Date?
     @Published var snoozeEvents: [Date] = [] // Track individual snooze events
     private var snoozeDetectionTimer: Timer?
+    private var alarmStateMonitorTimer: Timer?
     private var initialAlarmDuration: TimeInterval = 0
     private var lastAlarmState: Alarm.State?
+    private var wasAlerting = false // Track if alarm was alerting
     
     // Dependencies (will be set by the app)
     weak var settingsManager: UserSettingsManager?
@@ -39,6 +41,12 @@ class AlarmKitManager: ObservableObject {
     init() {
         setupAlarmObservers()
         checkInitialAuthorizationState()
+        startAlarmStateMonitoring()
+    }
+    
+    deinit {
+        stopAlarmStateMonitoring()
+        stopSnoozeDetection()
     }
     
     private func checkInitialAuthorizationState() {
@@ -404,6 +412,109 @@ class AlarmKitManager: ObservableObject {
         alarmStartTime = nil
         initialAlarmDuration = 0
         lastAlarmState = nil
+        wasAlerting = false
+    }
+    
+    // MARK: - Alarm State Monitoring for Completion
+    
+    private func startAlarmStateMonitoring() {
+        print("🎯 Starting alarm state monitoring for completion detection...")
+        
+        // Poll every 2 seconds to check alarm states
+        alarmStateMonitorTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.checkForAlarmCompletion()
+        }
+    }
+    
+    private func stopAlarmStateMonitoring() {
+        print("🛑 Stopping alarm state monitoring...")
+        alarmStateMonitorTimer?.invalidate()
+        alarmStateMonitorTimer = nil
+    }
+    
+    private func checkForAlarmCompletion() {
+        do {
+            let alarms = try alarmManager.alarms
+            
+            // Debug: Show monitoring status periodically (every 30 checks = 1 minute)
+            let checkCount = (Int(Date().timeIntervalSince1970) / 2) % 30
+            if checkCount == 0 {
+                print("🔍 Monitoring alarms... Count: \(alarms.count), Was alerting: \(wasAlerting)")
+            }
+            
+            // Check if we have any alarms currently alerting or in countdown
+            var foundActiveAlarm = false
+            
+            for alarm in alarms {
+                let currentState = alarm.state
+                
+                // Debug: Log alarm states when there are active alarms
+                if currentState == .alerting || currentState == .countdown {
+                    print("📊 Alarm state: \(currentState), ID: \(alarm.id)")
+                }
+                
+                // Detect when alarm starts alerting
+                if currentState == .alerting {
+                    foundActiveAlarm = true
+                    if !wasAlerting {
+                        print("🔔 Alarm is now ALERTING - user woke up!")
+                        wasAlerting = true
+                        alarmStartTime = Date()
+                    }
+                }
+                
+                // Check for snooze (alerting to countdown)
+                if currentState == .countdown && wasAlerting {
+                    print("⏰ Alarm SNOOZED - incrementing snooze count")
+                    recordSnoozeEvent()
+                    foundActiveAlarm = true // Countdown means alarm is still active
+                }
+            }
+            
+            // If we were alerting but now there are no alerting/countdown alarms, it was dismissed
+            if wasAlerting && !foundActiveAlarm {
+                print("✅ Alarm DISMISSED - completing day!")
+                wasAlerting = false
+                
+                // Trigger alarm completion
+                handleAlarmCompleted()
+            }
+        } catch {
+            print("❌ Error checking alarm states for completion: \(error)")
+        }
+    }
+    
+    private func handleAlarmCompleted() {
+        print("🎉 Alarm completed - processing day completion...")
+        
+        // Update sleep tracking data
+        if let sleepTracker = sleepTracker {
+            let today = Calendar.current.startOfDay(for: Date())
+            let targetWakeTime = settingsManager?.settings.targetWakeUpTime ?? Date()
+            let actualWakeTime = Date()
+            
+            let sleepData = SleepData(
+                date: today,
+                actualWakeTime: actualWakeTime,
+                targetWakeTime: targetWakeTime,
+                snoozeCount: currentSnoozeCount,
+                isSuccessful: actualWakeTime <= targetWakeTime,
+                alarmEnabled: true
+            )
+            
+            sleepTracker.addSleepData(sleepData)
+            print("📊 Sleep data recorded for today")
+        }
+        
+        // Update current wake time for 15-minute progression
+        updateCurrentWakeTimeForJourney()
+        
+        // Reset snooze count
+        currentSnoozeCount = 0
+        snoozeEvents.removeAll()
+        alarmStartTime = nil
+        
+        print("✅ Day completion processed successfully!")
     }
     
     // MARK: - Event Handling
@@ -523,6 +634,9 @@ class AlarmKitManager: ObservableObject {
         settingsManager.settings.currentWakeUpTime = nextWakeTime
         
         print("⏰ Updated current wake time from \(currentWakeTime.formatted(date: .omitted, time: .shortened)) to \(nextWakeTime.formatted(date: .omitted, time: .shortened))")
+        
+        // Notify UI that wake time has been updated
+        NotificationCenter.default.post(name: .wakeTimeUpdated, object: nil)
         
         // Schedule the next alarm
         scheduleNextAlarm()
@@ -831,17 +945,9 @@ class AlarmKitManager: ObservableObject {
         
         // Check Live Activities authorization (required for AlarmKit)
         print("🔍 Checking Live Activities authorization...")
-        if #available(iOS 16.1, *) {
-            // Note: Live Activities authorization check is not available via public API
-            // The system will handle this automatically when scheduling activities
-            print("🔍 Live Activities: Available (authorization handled by system)")
-        } else {
-            print("🔍 Live Activities require iOS 16.1+")
-        }
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Note: Live Activities authorization check is not available via public API
+        // The system will handle this automatically when scheduling activities
+        print("🔍 Live Activities: Available (authorization handled by system)")
     }
 }
 

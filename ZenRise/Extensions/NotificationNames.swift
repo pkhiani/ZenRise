@@ -9,4 +9,5 @@ import Foundation
 
 extension Notification.Name {
     static let openSleepReadinessQuiz = Notification.Name("openSleepReadinessQuiz")
+    static let wakeTimeUpdated = Notification.Name("wakeTimeUpdated")
 }
