@@ -84,10 +84,10 @@ struct QuizQuestion: Codable, Identifiable {
                 question: "How much time did you spend on devices in the last hour?",
                 answers: [
                     QuizAnswer(text: "None", value: 5, color: "green"),
-                    QuizAnswer(text: "Under 15 min", value: 4, color: "mint"),
-                    QuizAnswer(text: "15-30 min", value: 3, color: "yellow"),
-                    QuizAnswer(text: "30-60 min", value: 2, color: "orange"),
-                    QuizAnswer(text: "Over 1 hour", value: 1, color: "red")
+                    QuizAnswer(text: "Under 10 min", value: 4, color: "mint"),
+                    QuizAnswer(text: "10-30 min", value: 3, color: "yellow"),
+                    QuizAnswer(text: "30-45 min", value: 2, color: "orange"),
+                    QuizAnswer(text: "Over 45 min", value: 1, color: "red")
                 ],
                 isAdaptive: false
             ),
