@@ -12,6 +12,17 @@ public class ClockThemeSettings: ObservableObject, Codable {
             saveSettings()
         }
     }
+    
+    // Codable properties for persistence
+    private var codableCurrentHandColor: CodableColor {
+        get { CodableColor(currentHandColor) }
+        set { currentHandColor = newValue.color }
+    }
+    
+    private var codableTargetHandColor: CodableColor {
+        get { CodableColor(targetHandColor) }
+        set { targetHandColor = newValue.color }
+    }
     @Published public var showArcs: Bool = true {
         didSet {
             saveSettings()
@@ -44,13 +55,13 @@ public class ClockThemeSettings: ObservableObject, Codable {
     
     // MARK: - Codable
     enum CodingKeys: String, CodingKey {
-        case currentHandColor, targetHandColor, showArcs, clockStyle, clockSize, selectedSound
+        case currentHandColor = "codableCurrentHandColor", targetHandColor = "codableTargetHandColor", showArcs, clockStyle, clockSize, selectedSound
     }
     
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        currentHandColor = try container.decode(Color.self, forKey: .currentHandColor)
-        targetHandColor = try container.decode(Color.self, forKey: .targetHandColor)
+        codableCurrentHandColor = try container.decode(CodableColor.self, forKey: .currentHandColor)
+        codableTargetHandColor = try container.decode(CodableColor.self, forKey: .targetHandColor)
         showArcs = try container.decode(Bool.self, forKey: .showArcs)
         clockStyle = try container.decode(ClockStyle.self, forKey: .clockStyle)
         clockSize = try container.decode(ClockSize.self, forKey: .clockSize)
@@ -59,8 +70,8 @@ public class ClockThemeSettings: ObservableObject, Codable {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(currentHandColor, forKey: .currentHandColor)
-        try container.encode(targetHandColor, forKey: .targetHandColor)
+        try container.encode(codableCurrentHandColor, forKey: .currentHandColor)
+        try container.encode(codableTargetHandColor, forKey: .targetHandColor)
         try container.encode(showArcs, forKey: .showArcs)
         try container.encode(clockStyle, forKey: .clockStyle)
         try container.encode(clockSize, forKey: .clockSize)
@@ -106,9 +117,15 @@ public class ClockThemeSettings: ObservableObject, Codable {
     }
 }
 
-// MARK: - Color Codable Extension
-extension Color: Codable {
-    public init(from decoder: Decoder) throws {
+// MARK: - CodableColor Wrapper
+struct CodableColor: Codable {
+    let color: Color
+    
+    init(_ color: Color) {
+        self.color = color
+    }
+    
+    init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
         // Try to decode as RGB values first
@@ -118,36 +135,36 @@ extension Color: Codable {
             let blue = rgbData["blue"] ?? 0.0
             let alpha = rgbData["alpha"] ?? 1.0
             
-            self = Color(red: red, green: green, blue: blue, opacity: alpha)
+            self.color = Color(red: red, green: green, blue: blue, opacity: alpha)
         } else {
             // Fallback to color name for backward compatibility
             let colorName = try container.decode(String.self)
             switch colorName {
-            case "blue": self = .blue
-            case "green": self = .green
-            case "red": self = .red
-            case "orange": self = .orange
-            case "yellow": self = .yellow
-            case "purple": self = .purple
-            case "pink": self = .pink
-            case "gray": self = .gray
-            case "black": self = .black
-            case "white": self = .white
-            case "cyan": self = .cyan
-            case "mint": self = .mint
-            case "indigo": self = .indigo
-            case "teal": self = .teal
-            case "brown": self = .brown
-            default: self = .mint // Default to mint instead of blue
+            case "blue": self.color = .blue
+            case "green": self.color = .green
+            case "red": self.color = .red
+            case "orange": self.color = .orange
+            case "yellow": self.color = .yellow
+            case "purple": self.color = .purple
+            case "pink": self.color = .pink
+            case "gray": self.color = .gray
+            case "black": self.color = .black
+            case "white": self.color = .white
+            case "cyan": self.color = .cyan
+            case "mint": self.color = .mint
+            case "indigo": self.color = .indigo
+            case "teal": self.color = .teal
+            case "brown": self.color = .brown
+            default: self.color = .mint // Default to mint instead of blue
             }
         }
     }
     
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
         // Convert to RGB values and store them directly
-        let resolvedColor = UIColor(self)
+        let resolvedColor = UIColor(color)
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         resolvedColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         

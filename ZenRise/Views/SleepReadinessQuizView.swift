@@ -38,8 +38,8 @@ struct SleepReadinessQuizView: View {
             }
             .navigationBarHidden(true)
         }
-        .onChange(of: quizManager.isQuizActive) { isActive in
-            if !isActive && quizManager.lastScore != nil {
+        .onChange(of: quizManager.isQuizActive) { oldValue, newValue in
+            if !newValue && quizManager.lastScore != nil {
                 showResults = true
             }
         }

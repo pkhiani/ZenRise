@@ -186,7 +186,7 @@ struct StreakTrackerView: View {
         .onAppear {
             updateStreakData()
         }
-        .onChange(of: sleepData) { _ in
+        .onChange(of: sleepData) { oldValue, newValue in
             updateStreakData()
         }
     }

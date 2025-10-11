@@ -8,13 +8,23 @@
 import Foundation
 
 struct SleepData: Codable, Identifiable, Equatable {
-    let id = UUID()
+    let id: UUID
     let date: Date
     let actualWakeTime: Date
     let targetWakeTime: Date
     let snoozeCount: Int
     let isSuccessful: Bool // Woke up at or before target time
     let alarmEnabled: Bool
+    
+    init(date: Date, actualWakeTime: Date, targetWakeTime: Date, snoozeCount: Int, isSuccessful: Bool, alarmEnabled: Bool) {
+        self.id = UUID()
+        self.date = date
+        self.actualWakeTime = actualWakeTime
+        self.targetWakeTime = targetWakeTime
+        self.snoozeCount = snoozeCount
+        self.isSuccessful = isSuccessful
+        self.alarmEnabled = alarmEnabled
+    }
     
     var timeDifference: TimeInterval {
         actualWakeTime.timeIntervalSince(targetWakeTime)
@@ -147,7 +157,6 @@ class SleepBehaviorTracker: ObservableObject {
     }
     
     func calculateCurrentStreak() -> Int {
-        let calendar = Calendar.current
         let sortedData = sleepData.sorted { $0.date > $1.date }
         var streak = 0
         

@@ -47,14 +47,14 @@ struct ContentView: View {
                         }
                         .tag(2)
                 }
-                .onChange(of: settingsManager.settings.isAlarmEnabled) { isEnabled in
-                    handleAlarmToggle(isEnabled: isEnabled)
+                .onChange(of: settingsManager.settings.isAlarmEnabled) { oldValue, newValue in
+                    handleAlarmToggle(isEnabled: newValue)
                 }
-                .onChange(of: settingsManager.settings.currentWakeUpTime) { newWakeUpTime in
-                    handleWakeUpTimeChange(newWakeUpTime: newWakeUpTime)
+                .onChange(of: settingsManager.settings.currentWakeUpTime) { oldValue, newValue in
+                    handleWakeUpTimeChange(newWakeUpTime: newValue)
                 }
-                .onChange(of: settingsManager.settings.targetWakeUpTime) { newTargetTime in
-                    handleWakeUpTimeChange(newWakeUpTime: newTargetTime)
+                .onChange(of: settingsManager.settings.targetWakeUpTime) { oldValue, newValue in
+                    handleWakeUpTimeChange(newWakeUpTime: newValue)
                 }
                 .onAppear {
                     requestInitialPermissionsIfNeeded()
