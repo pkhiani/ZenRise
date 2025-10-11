@@ -77,19 +77,23 @@ class UnifiedAlarmManager: ObservableObject {
     // MARK: - Permissions
     
     func requestPermission() async -> Bool {
+        // Always request notification permissions for quiz reminders
+        let notificationGranted = await notificationManager.requestPermission()
+        
         if #available(iOS 26.0, *) {
-            // Use AlarmKit exclusively
+            // Use AlarmKit for alarms
             let alarmKitGranted = await alarmKitManager.requestPermission()
             if alarmKitGranted {
                 logger.info("Using AlarmKit for alarms")
-                return true
             } else {
                 logger.error("AlarmKit permission denied - alarms will not work")
-                return false
             }
+            
+            // Return true if either AlarmKit OR notifications are granted (for quiz reminders)
+            return alarmKitGranted || notificationGranted
         } else {
-            logger.error("AlarmKit requires iOS 26.0 or later - alarms will not work")
-            return false
+            logger.error("AlarmKit requires iOS 26.0 or later - using notifications only")
+            return notificationGranted
         }
     }
     

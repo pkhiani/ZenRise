@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var hasRequestedInitialPermissions = false
     @State private var showQuizFromNotification = false
+    @State private var shouldSuppressAlarmRescheduling = false
     
     private var wakeUpSchedule: WakeUpSchedule {
         WakeUpSchedule(
@@ -66,6 +67,12 @@ struct ContentView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openSleepReadinessQuiz)) { _ in
                     selectedTab = 1 // Switch to Progress tab
                     showQuizFromNotification = true
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .suppressAlarmRescheduling)) { _ in
+                    shouldSuppressAlarmRescheduling = true
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .enableAlarmRescheduling)) { _ in
+                    shouldSuppressAlarmRescheduling = false
                 }
             } else {
                 OnboardingFlowView(hasCompletedOnboarding: $settingsManager.settings.hasCompletedOnboarding)
@@ -167,6 +174,12 @@ struct ContentView: View {
         // Only reschedule if alarm is enabled
         guard settingsManager.settings.isAlarmEnabled else {
             print("⏰ Wake-up time changed but alarm is disabled - skipping reschedule")
+            return
+        }
+        
+        // Don't reschedule if we're in the middle of a day completion (to avoid duplicate alarms)
+        guard !shouldSuppressAlarmRescheduling else {
+            print("⏰ Wake-up time changed during day completion - skipping duplicate reschedule")
             return
         }
         

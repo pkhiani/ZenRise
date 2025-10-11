@@ -38,6 +38,7 @@ class AlarmKitManager: ObservableObject {
     // Dependencies (will be set by the app)
     weak var settingsManager: UserSettingsManager?
     weak var sleepTracker: SleepBehaviorTracker?
+    weak var notificationManager: NotificationManager?
     
     init() {
         setupAlarmObservers()
@@ -229,6 +230,11 @@ class AlarmKitManager: ObservableObject {
             print("✅ Alarm state: \(String(describing: scheduledAlarm.state))")
             print("✅ Alarm will fire at: \(alarmTime)")
             print("✅ Tracking alarm ID: \(alarmID)")
+            
+            // Schedule quiz reminder notification for pre-sleep
+            if let notificationManager = notificationManager {
+                await notificationManager.schedulePreSleepQuizReminder(for: alarmTime)
+            }
             
         } catch {
             print("❌ Scheduling error: \(error)")
@@ -693,6 +699,9 @@ class AlarmKitManager: ObservableObject {
         
         let nextWakeTime = calendar.date(from: nextWakeComponents) ?? currentWakeTime
         
+        // Post notification BEFORE updating to suppress ContentView's onChange handler
+        NotificationCenter.default.post(name: .suppressAlarmRescheduling, object: nil)
+        
         // Update the current wake time
         settingsManager.settings.currentWakeUpTime = nextWakeTime
         
@@ -703,6 +712,11 @@ class AlarmKitManager: ObservableObject {
         
         // Schedule the next alarm
         scheduleNextAlarm()
+        
+        // Re-enable automatic rescheduling after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            NotificationCenter.default.post(name: .enableAlarmRescheduling, object: nil)
+        }
     }
     
     // Schedule the next alarm based on updated wake time
@@ -994,9 +1008,3 @@ class AlarmKitManager: ObservableObject {
     }
 }
 
-// MARK: - Extensions
-
-extension Notification.Name {
-    static let alarmDidFire = Notification.Name("alarmDidFire")
-    static let alarmDidSnooze = Notification.Name("alarmDidSnooze")
-}
