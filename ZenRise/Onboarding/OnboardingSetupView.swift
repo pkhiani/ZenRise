@@ -154,6 +154,7 @@ struct OnboardingSetupView: View {
         settingsManager.settings.targetWakeUpTime = targetWakeTime
         settingsManager.settings.themeSettings.selectedSound = selectedSound
         settingsManager.settings.startDate = Date()
+        settingsManager.settings.targetDays = wakeUpSchedule.timeUntilTarget.days // Store original target days
         settingsManager.settings.isSubscribed = true // User completed subscription flow
         // Alarm remains disabled by default - user must enable it manually
         

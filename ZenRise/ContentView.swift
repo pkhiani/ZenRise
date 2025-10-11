@@ -50,6 +50,12 @@ struct ContentView: View {
                 .onChange(of: settingsManager.settings.isAlarmEnabled) { isEnabled in
                     handleAlarmToggle(isEnabled: isEnabled)
                 }
+                .onChange(of: settingsManager.settings.currentWakeUpTime) { newWakeUpTime in
+                    handleWakeUpTimeChange(newWakeUpTime: newWakeUpTime)
+                }
+                .onChange(of: settingsManager.settings.targetWakeUpTime) { newTargetTime in
+                    handleWakeUpTimeChange(newWakeUpTime: newTargetTime)
+                }
                 .onAppear {
                     requestInitialPermissionsIfNeeded()
                 }
@@ -154,6 +160,32 @@ struct ContentView: View {
             Task {
                 await alarmManager.cancelAllAlarms()
             }
+        }
+    }
+    
+    private func handleWakeUpTimeChange(newWakeUpTime: Date) {
+        // Only reschedule if alarm is enabled
+        guard settingsManager.settings.isAlarmEnabled else {
+            print("⏰ Wake-up time changed but alarm is disabled - skipping reschedule")
+            return
+        }
+        
+        print("⏰ Current wake-up time changed to \(newWakeUpTime.formatted(date: .omitted, time: .shortened))")
+        print("⏰ Rescheduling alarm...")
+        
+        Task {
+            // Reschedule the alarm with the new wake-up time
+            await alarmManager.scheduleAlarm(
+                for: wakeUpSchedule.timeUntilTarget.nextWakeUp,
+                sound: settingsManager.settings.themeSettings.selectedSound
+            )
+            
+            // Also reschedule the pre-sleep quiz reminder
+            await alarmManager.schedulePreSleepQuizReminder(
+                for: wakeUpSchedule.timeUntilTarget.nextWakeUp
+            )
+            
+            print("✅ Alarm rescheduled for new wake-up time")
         }
     }
 }

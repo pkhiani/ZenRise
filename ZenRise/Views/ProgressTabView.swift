@@ -266,6 +266,7 @@ struct ProgressOverviewView: View {
                         startDate: startDate,
                         sleepData: sleepTracker.sleepData
                     )
+                    .environmentObject(settingsManager)
                 } else {
                     Text("Start your alarm to begin tracking progress")
                         .font(.subheadline)
@@ -362,16 +363,19 @@ struct ProgressSummaryCard: View {
     let wakeUpSchedule: WakeUpSchedule
     let startDate: Date
     let sleepData: [SleepData]
+    @EnvironmentObject var settingsManager: UserSettingsManager
     
     private var daysCompleted: Int {
-        let calendar = Calendar.current
-        let days = calendar.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        return min(days, wakeUpSchedule.timeUntilTarget.days)
+        // Count successful sleep days, not just calendar days
+        let successfulDays = sleepData.filter { $0.isSuccessful }.count
+        let targetDays = settingsManager.settings.targetDays ?? wakeUpSchedule.timeUntilTarget.days
+        return min(successfulDays, targetDays)
     }
     
     private var progressPercentage: Double {
-        guard wakeUpSchedule.timeUntilTarget.days > 0 else { return 0 }
-        return Double(daysCompleted) / Double(wakeUpSchedule.timeUntilTarget.days)
+        let targetDays = settingsManager.settings.targetDays ?? wakeUpSchedule.timeUntilTarget.days
+        guard targetDays > 0 else { return 0 }
+        return Double(daysCompleted) / Double(targetDays)
     }
     
     var body: some View {
@@ -386,7 +390,7 @@ struct ProgressSummaryCard: View {
                     
                     Spacer()
                     
-                    Text("\(daysCompleted)/\(wakeUpSchedule.timeUntilTarget.days)")
+                    Text("\(daysCompleted)/\(settingsManager.settings.targetDays ?? wakeUpSchedule.timeUntilTarget.days)")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)

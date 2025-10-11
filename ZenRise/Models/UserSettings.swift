@@ -6,6 +6,7 @@ struct UserSettings: Codable {
     var targetWakeUpTime: Date
     var isAlarmEnabled: Bool
     var startDate: Date?
+    var targetDays: Int? // Original target number of days for the journey
     var themeSettings: ClockThemeSettings
     var hasCompletedOnboarding: Bool
     var isSubscribed: Bool
@@ -15,6 +16,7 @@ struct UserSettings: Codable {
         targetWakeUpTime: Calendar.current.date(from: DateComponents(hour: 6, minute: 0)) ?? Date(),
         isAlarmEnabled: false,
         startDate: nil,
+        targetDays: nil,
         themeSettings: ClockThemeSettings(),
         hasCompletedOnboarding: false,
         isSubscribed: false

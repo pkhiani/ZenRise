@@ -257,12 +257,12 @@ struct SettingsView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Reset Sleep Data")
+                                Text("Reset App")
                                     .font(.headline)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                                 
-                                Text("Clear all progress and start fresh")
+                                Text("Complete reset - disable alarms and clear all data")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -399,15 +399,44 @@ struct SettingsView: View {
         .onDisappear {
             soundManager.stopSound()
         }
-        .alert("Reset Sleep Data", isPresented: $showingResetAlert) {
+        .alert("Reset App", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Reset", role: .destructive) {
-                sleepTracker.clearAllData()
-                quizManager.clearAllData()
+                Task {
+                    await performCompleteReset()
+                }
             }
         } message: {
-            Text("This will permanently delete all your sleep progress data, including wake-up times, snooze patterns, streaks, and sleep readiness assessments. This action cannot be undone.")
+            Text("This will completely reset the app to its initial state: cancel all alarms, reset wake-up times to defaults, disable the alarm, and permanently delete all sleep progress data, snooze patterns, streaks, and sleep readiness assessments. This action cannot be undone.")
         }
+    }
+    
+    private func performCompleteReset() async {
+        print("🔄 Performing complete app reset...")
+        
+        // 1. Cancel all alarms
+        await alarmManager.cancelAllAlarms()
+        print("🔄 Cancelled all alarms")
+        
+        // 2. Reset settings to defaults (disable alarm, reset wake times)
+        settingsManager.resetToDefaults()
+        print("🔄 Reset settings to defaults")
+        
+        // 3. Clear all sleep and snooze data
+        sleepTracker.clearAllData()
+        print("🔄 Cleared sleep data")
+        
+        // 4. Clear quiz data
+        quizManager.clearAllData()
+        print("🔄 Cleared quiz data")
+        
+        // 5. Reset alarm manager tracking
+        if #available(iOS 26.0, *) {
+            alarmManager.alarmKitManager.resetSnoozeTracking()
+            print("🔄 Reset alarm manager tracking")
+        }
+        
+        print("✅ Complete app reset finished - app is now like fresh install")
     }
 }
 

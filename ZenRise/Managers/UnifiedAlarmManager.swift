@@ -23,7 +23,7 @@ class UnifiedAlarmManager: ObservableObject {
     // Managers
     let notificationManager: NotificationManager
     @available(iOS 26.0, *)
-    private lazy var alarmKitManager: AlarmKitManager = {
+    lazy var alarmKitManager: AlarmKitManager = {
         let manager = AlarmKitManager()
         manager.settingsManager = settingsManager
         manager.sleepTracker = sleepTracker
@@ -209,32 +209,6 @@ class UnifiedAlarmManager: ObservableObject {
             return alarmKitManager.currentSnoozeCount
         }
         return 0
-    }
-    
-    func handleSnoozeButtonPressed() {
-        if #available(iOS 26.0, *) {
-            alarmKitManager.handleSnoozeButtonPressed()
-        }
-    }
-    
-    func detectSnoozeButtonPress() {
-        print("🔍 UnifiedAlarmManager.detectSnoozeButtonPress() called")
-        if #available(iOS 26.0, *) {
-            print("🔍 iOS 26.0+ available, calling AlarmKitManager")
-            alarmKitManager.detectSnoozeButtonPress()
-        } else {
-            print("🔍 iOS 26.0+ not available")
-        }
-    }
-    
-    func handleAlarmSnoozeButtonPressed() {
-        print("🔍 UnifiedAlarmManager.handleAlarmSnoozeButtonPressed() called")
-        if #available(iOS 26.0, *) {
-            print("🔍 iOS 26.0+ available, calling AlarmKitManager")
-            alarmKitManager.handleAlarmSnoozeButtonPressed()
-        } else {
-            print("🔍 iOS 26.0+ not available")
-        }
     }
     
     func recordSnooze() {

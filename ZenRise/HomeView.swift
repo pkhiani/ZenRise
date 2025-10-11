@@ -155,6 +155,7 @@ struct AlarmStatusCard: View {
     let daysRemaining: Int
     let startDate: Date?
     let wakeUpSchedule: WakeUpSchedule
+    @EnvironmentObject var alarmManager: UnifiedAlarmManager
     
     var body: some View {
         VStack(spacing: 24) {
@@ -221,22 +222,52 @@ struct AlarmStatusCard: View {
                 
                 Spacer()
                 
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .font(.title3)
+                // Manual Action Buttons
+                HStack(spacing: 12) {
+                    // Snooze Button
+                    Button(action: {
+                        print("🔔 Manual snooze button pressed")
+                        alarmManager.recordSnooze()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "moon.zzz.fill")
+                                .font(.caption)
+                            Text("Snooze")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.orange.opacity(0.1))
+                        )
+                    }
                     
-                    Text("Journey Active")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                    // Completed Button
+                    Button(action: {
+                        print("✅ Manual completed button pressed")
+                        Task {
+                            await handleManualAlarmCompletion()
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                            Text("Completed")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
                         .foregroundColor(.green)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.green.opacity(0.1))
+                        )
+                    }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.green.opacity(0.1))
-                )
             }
         }
         .padding(24)
@@ -246,6 +277,18 @@ struct AlarmStatusCard: View {
                 .shadow(color: Color.primary.opacity(0.15), radius: 12, x: 0, y: 4)
         )
         .padding(.horizontal, 20)
+    }
+    
+    private func handleManualAlarmCompletion() async {
+        print("✅ Manual alarm completion triggered")
+        
+        // Call the alarm manager to handle completion
+        if #available(iOS 26.0, *) {
+            // For AlarmKit, we need to manually trigger the completion logic
+            await alarmManager.alarmKitManager.handleManualAlarmCompletion()
+        }
+        
+        print("✅ Manual alarm completion processed")
     }
 }
 

@@ -172,6 +172,7 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Schedule notification for 5 seconds from now
         let testTime = Date().addingTimeInterval(5)
+        let timeInterval = testTime.timeIntervalSinceNow
         
         let content = UNMutableNotificationContent()
         content.title = "Sleep Readiness Check"
@@ -183,7 +184,7 @@ class NotificationManager: NSObject, ObservableObject {
             "action": "open_quiz"
         ]
         
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
         let request = UNNotificationRequest(identifier: "testQuizNotification", content: content, trigger: trigger)
         
         do {
@@ -481,6 +482,7 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Schedule reminder for 30 minutes later
         let reminderTime = Date().addingTimeInterval(30 * 60) // 30 minutes
+        let timeInterval = reminderTime.timeIntervalSinceNow
         
         let content = UNMutableNotificationContent()
         content.title = "Sleep Readiness Check"
@@ -488,7 +490,7 @@ class NotificationManager: NSObject, ObservableObject {
         content.sound = .default
         content.categoryIdentifier = "QUIZ_REMINDER_CATEGORY"
         
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 30 * 60, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
         let request = UNNotificationRequest(identifier: "preSleepQuizReminder_\(Date().timeIntervalSince1970)", content: content, trigger: trigger)
         
         Task {

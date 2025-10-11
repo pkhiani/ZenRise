@@ -19,7 +19,12 @@ struct StreakTrackerView: View {
     }
     
     private var userGoal: Int {
-        // Calculate goal based on user's target wake time vs current wake time
+        // Use the static target days from settings, fallback to dynamic calculation if not set
+        if let targetDays = settingsManager.settings.targetDays {
+            return targetDays
+        }
+        
+        // Fallback: Calculate goal based on user's target wake time vs current wake time
         let calendar = Calendar.current
         let currentTime = settingsManager.settings.currentWakeUpTime
         let targetTime = settingsManager.settings.targetWakeUpTime

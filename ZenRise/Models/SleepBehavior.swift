@@ -81,13 +81,18 @@ class SleepBehaviorTracker: ObservableObject {
     }
     
     func updateSleepData(_ data: SleepData) {
-        if let index = sleepData.firstIndex(where: { $0.id == data.id }) {
+        // Match by date instead of ID since ID is always new UUID()
+        if let index = sleepData.firstIndex(where: { 
+            Calendar.current.isDate($0.date, inSameDayAs: data.date) 
+        }) {
             sleepData[index] = data
             saveData()
             updateWeeklySummaries()
+            print("📊 Updated existing sleep data for date: \(data.date)")
         } else {
             // If not found, add it
             addSleepData(data)
+            print("📊 Added new sleep data for date: \(data.date)")
         }
     }
     
