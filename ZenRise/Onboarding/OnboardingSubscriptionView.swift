@@ -154,8 +154,16 @@ struct OnboardingSubscriptionView: View {
                 endPoint: .bottom
             )
         )
+        .onAppear {
+            // Auto-select the first plan immediately
+            if selectedPlan == nil {
+                selectedPlan = plans.first
+            }
+        }
         .task {
             await revenueCatManager.fetchOfferings()
+            // Update selected plan after offerings are fetched (to get the real price)
+            selectedPlan = plans.first
         }
         .alert("Purchase Error", isPresented: $showError) {
             Button("OK") {
