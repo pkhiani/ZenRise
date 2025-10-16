@@ -10,14 +10,15 @@ import SwiftUI
 struct OnboardingSubscriptionView: View {
     @Binding var currentStep: OnboardingStep
     @StateObject private var revenueCatManager = RevenueCatManager.shared
-    @State private var selectedPlan: SubscriptionPlan = .weekly
+    @State private var selectedPlan: SubscriptionPlan?
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
     
-    private let plans = [
-        SubscriptionPlan.weekly
-    ]
+    private var plans: [SubscriptionPlan] {
+        let weeklyPrice = revenueCatManager.getWeeklyPrice() ?? "$1.99/week"
+        return [SubscriptionPlan.weekly(price: weeklyPrice)]
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -53,7 +54,7 @@ struct OnboardingSubscriptionView: View {
                 ForEach(plans, id: \.id) { plan in
                     SubscriptionPlanCard(
                         plan: plan,
-                        isSelected: selectedPlan.id == plan.id
+                        isSelected: selectedPlan?.id == plan.id
                     ) {
                         selectedPlan = plan
                     }
@@ -65,7 +66,7 @@ struct OnboardingSubscriptionView: View {
             
             // Free Trial Notice
             VStack(spacing: 8) {
-                Text("\(AppConfig.RevenueCat.freeTrialDays)-day free trial, then \(revenueCatManager.getWeeklyPrice() ?? selectedPlan.price)")
+                Text("\(AppConfig.RevenueCat.freeTrialDays)-day free trial, then \(revenueCatManager.getWeeklyPrice() ?? selectedPlan?.price ?? "$1.99/week")")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
@@ -202,10 +203,9 @@ struct OnboardingSubscriptionView: View {
             } else {
                 // Purchase failed - show error or allow retry
                 print("❌ Purchase failed - staying on subscription screen")
-                print("💡 User needs to fix sandbox account authentication")
                 
                 showError = true
-                errorMessage = "Purchase failed. Please check your sandbox account settings and try again."
+                errorMessage = "Unable to complete purchase. Please check your payment method and try again."
             }
         }
     }
@@ -227,7 +227,7 @@ struct OnboardingSubscriptionView: View {
             } else {
                 print("❌ Restore failed - no purchases found")
                 showError = true
-                errorMessage = "No previous purchases found. Please subscribe to continue."
+                errorMessage = "No active subscription found. Please check your Apple ID or try subscribing again."
             }
         }
     }
@@ -240,13 +240,15 @@ struct SubscriptionPlan {
     let period: String
     let savings: String?
     
-    static let weekly = SubscriptionPlan(
-        id: "weekly",
-        title: "Weekly",
-        price: "$1.99/week",
-        period: "Billed weekly",
-        savings: nil
-    )
+    static func weekly(price: String) -> SubscriptionPlan {
+        return SubscriptionPlan(
+            id: "weekly",
+            title: "Weekly",
+            price: price,
+            period: "Billed weekly",
+            savings: nil
+        )
+    }
 }
 
 struct SubscriptionPlanCard: View {

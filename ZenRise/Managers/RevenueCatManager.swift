@@ -114,7 +114,7 @@ class RevenueCatManager: NSObject, ObservableObject {
     func purchaseWeeklySubscription() async -> Bool {
         guard let weeklyPackage = getWeeklyPackageFromOfferings() else {
             await MainActor.run {
-                self.errorMessage = "Weekly subscription not available"
+                self.errorMessage = "Subscription is temporarily unavailable. Please try again later."
             }
             return false
         }

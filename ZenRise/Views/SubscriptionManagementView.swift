@@ -42,7 +42,7 @@ struct SubscriptionManagementView: View {
                             .foregroundColor(.primary)
                         
                         if revenueCatManager.isSubscribed {
-                            Text("Weekly Plan - $1.99/week")
+                            Text("Weekly Plan - \(revenueCatManager.getWeeklyPrice() ?? "$1.99/week")")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         } else {
