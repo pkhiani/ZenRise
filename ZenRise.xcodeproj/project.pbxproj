@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E45326C2EDCE9BA00337860 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E45326B2EDCE9BA00337860 /* WidgetKit.framework */; };
+		4E45326E2EDCE9BA00337860 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E45326D2EDCE9BA00337860 /* SwiftUI.framework */; };
+		4E45327F2EDCE9BB00337860 /* ZenRiseWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4E4532692EDCE9BA00337860 /* ZenRiseWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4EE7F6952E9462C2003D26A2 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 4EE7F6942E9462C2003D26A2 /* RevenueCat */; };
 		4EE7F69F2E947D35003D26A2 /* test.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 4EE7F69E2E947D35003D26A2 /* test.storekit */; };
 /* End PBXBuildFile section */
@@ -26,16 +29,48 @@
 			remoteGlobalIDString = 4E23E8762D20C9DA00F34526;
 			remoteInfo = ZenRise;
 		};
+		4E45327D2EDCE9BB00337860 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E23E86F2D20C9DA00F34526 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E4532682EDCE9BA00337860;
+			remoteInfo = ZenRiseWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4E4532802EDCE9BB00337860 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4E45327F2EDCE9BB00337860 /* ZenRiseWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		4E23E8772D20C9DA00F34526 /* ZenRise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZenRise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E23E8872D20C9DB00F34526 /* ZenRiseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenRiseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E23E8912D20C9DB00F34526 /* ZenRiseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenRiseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E4532692EDCE9BA00337860 /* ZenRiseWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZenRiseWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E45326B2EDCE9BA00337860 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		4E45326D2EDCE9BA00337860 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		4E45328E2EDCEAB800337860 /* ZenRiseWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenRiseWidgetExtension.entitlements; sourceTree = "<group>"; };
 		4EE7F69E2E947D35003D26A2 /* test.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = test.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4E4532842EDCE9BB00337860 /* Exceptions for "ZenRiseWidget" folder in "ZenRiseWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4E4532682EDCE9BA00337860 /* ZenRiseWidgetExtension */;
+		};
 		4E767BE12E93674800F9BEA3 /* Exceptions for "ZenRise" folder in "ZenRise" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -64,6 +99,14 @@
 			path = ZenRiseUITests;
 			sourceTree = "<group>";
 		};
+		4E45326F2EDCE9BA00337860 /* ZenRiseWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4E4532842EDCE9BB00337860 /* Exceptions for "ZenRiseWidget" folder in "ZenRiseWidgetExtension" target */,
+			);
+			path = ZenRiseWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,16 +132,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4E4532662EDCE9BA00337860 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E45326E2EDCE9BA00337860 /* SwiftUI.framework in Frameworks */,
+				4E45326C2EDCE9BA00337860 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		4E23E86E2D20C9D900F34526 = {
 			isa = PBXGroup;
 			children = (
+				4E45328E2EDCEAB800337860 /* ZenRiseWidgetExtension.entitlements */,
 				4EE7F69E2E947D35003D26A2 /* test.storekit */,
 				4E23E8792D20C9DA00F34526 /* ZenRise */,
 				4E23E88A2D20C9DB00F34526 /* ZenRiseTests */,
 				4E23E8942D20C9DB00F34526 /* ZenRiseUITests */,
+				4E45326F2EDCE9BA00337860 /* ZenRiseWidget */,
+				4E45326A2EDCE9BA00337860 /* Frameworks */,
 				4E23E8782D20C9DA00F34526 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,8 +164,18 @@
 				4E23E8772D20C9DA00F34526 /* ZenRise.app */,
 				4E23E8872D20C9DB00F34526 /* ZenRiseTests.xctest */,
 				4E23E8912D20C9DB00F34526 /* ZenRiseUITests.xctest */,
+				4E4532692EDCE9BA00337860 /* ZenRiseWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4E45326A2EDCE9BA00337860 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4E45326B2EDCE9BA00337860 /* WidgetKit.framework */,
+				4E45326D2EDCE9BA00337860 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -123,10 +188,12 @@
 				4E23E8732D20C9DA00F34526 /* Sources */,
 				4E23E8742D20C9DA00F34526 /* Frameworks */,
 				4E23E8752D20C9DA00F34526 /* Resources */,
+				4E4532802EDCE9BB00337860 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4E45327E2EDCE9BB00337860 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4E23E8792D20C9DA00F34526 /* ZenRise */,
@@ -185,6 +252,28 @@
 			productReference = 4E23E8912D20C9DB00F34526 /* ZenRiseUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		4E4532682EDCE9BA00337860 /* ZenRiseWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4E4532832EDCE9BB00337860 /* Build configuration list for PBXNativeTarget "ZenRiseWidgetExtension" */;
+			buildPhases = (
+				4E4532652EDCE9BA00337860 /* Sources */,
+				4E4532662EDCE9BA00337860 /* Frameworks */,
+				4E4532672EDCE9BA00337860 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4E45326F2EDCE9BA00337860 /* ZenRiseWidget */,
+			);
+			name = ZenRiseWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ZenRiseWidgetExtension;
+			productReference = 4E4532692EDCE9BA00337860 /* ZenRiseWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -192,7 +281,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					4E23E8762D20C9DA00F34526 = {
@@ -205,6 +294,9 @@
 					4E23E8902D20C9DB00F34526 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 4E23E8762D20C9DA00F34526;
+					};
+					4E4532682EDCE9BA00337860 = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -228,6 +320,7 @@
 				4E23E8762D20C9DA00F34526 /* ZenRise */,
 				4E23E8862D20C9DB00F34526 /* ZenRiseTests */,
 				4E23E8902D20C9DB00F34526 /* ZenRiseUITests */,
+				4E4532682EDCE9BA00337860 /* ZenRiseWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -249,6 +342,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		4E23E88F2D20C9DB00F34526 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E4532672EDCE9BA00337860 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -279,6 +379,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4E4532652EDCE9BA00337860 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -291,6 +398,11 @@
 			isa = PBXTargetDependency;
 			target = 4E23E8762D20C9DA00F34526 /* ZenRise */;
 			targetProxy = 4E23E8922D20C9DB00F34526 /* PBXContainerItemProxy */;
+		};
+		4E45327E2EDCE9BB00337860 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E4532682EDCE9BA00337860 /* ZenRiseWidgetExtension */;
+			targetProxy = 4E45327D2EDCE9BB00337860 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -422,6 +534,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = ZenRise/ZenRise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ZenRise/Preview Content\"";
@@ -454,6 +567,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = ZenRise/ZenRise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ZenRise/Preview Content\"";
@@ -548,6 +662,70 @@
 			};
 			name = Release;
 		};
+		4E4532812EDCE9BB00337860 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ZenRiseWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HQ2ETGWEV9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZenRiseWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ZenRiseWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenrise.app.ZenRiseWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4E4532822EDCE9BB00337860 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ZenRiseWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HQ2ETGWEV9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZenRiseWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ZenRiseWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenrise.app.ZenRiseWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -583,6 +761,15 @@
 			buildConfigurations = (
 				4E23E8A22D20C9DB00F34526 /* Debug */,
 				4E23E8A32D20C9DB00F34526 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4E4532832EDCE9BB00337860 /* Build configuration list for PBXNativeTarget "ZenRiseWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E4532812EDCE9BB00337860 /* Debug */,
+				4E4532822EDCE9BB00337860 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
